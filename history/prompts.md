@@ -113,3 +113,45 @@ Device Class: U3v
 -----------------------这个是输出，我希望在这个基础上进一步开发SN连接相机,谢谢！
 
 ---
+
+    pub unsafe fn gx_get_image(&self, device: GX_DEV_HANDLE, frame_data: &mut GX_FRAME_DATA, timeout: i32) -> Result<i32, CameraError> {
+        let gx_get_image: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, frame_data: *mut GX_FRAME_DATA, timeout: i32) -> i32> = self.lib.get(b"GXGetImage")?;
+        let status = gx_get_image(device, frame_data as *mut _, timeout);
+        if status == GX_STATUS_LIST::GX_STATUS_SUCCESS as i32 {
+            Ok(status)
+        } else {
+            // Err(libloading::Error::from(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to get image: Status {}", status))))
+            // Err(format!("Failed to get image: Status {}", status))
+            Err(CameraError::OperationError(format!("Failed to get image: Status {}", status)))
+        }
+    },结构体是
+    #[repr(C)]
+#[derive(Debug, Clone)]
+pub struct GX_FRAME_DATA {
+    pub status: u32,            // Image acquisition status
+    pub frame_id: u64,          // Frame ID
+    pub p_img_buf: *mut u8,     // Pointer to the image buffer
+    pub img_size: usize,        // Size of the image buffer
+    pub width: u32,             // Image width
+    pub height: u32,            // Image height
+    pub pixel_format: u32,      // Pixel format
+    pub timestamp: u64,         // Timestamp of the frame
+}
+    
+    这个我在这
+            let mut frame_data = GX_FRAME_DATA {
+            status: 0,
+            frame_id: 0,
+            p_img_buf: std::ptr::null_mut(),
+            img_size: 0,
+            width: 2048,
+            height: 1536,
+            pixel_format: 0,
+            timestamp: 0,
+        };
+            let payload_size = 4096 * 3000; // Adjust size accordingly
+        let mut buffer = vec![0u8; payload_size];
+        frame_data.p_img_buf = buffer.as_mut_ptr() as *mut u8;
+        frame_data.img_size = payload_size;        gx.gx_get_image(device_handle, &mut frame_data, 1000).expect("Failed to get image");
+调用的时候报错
+Failed to get image: OperationError("Failed to get image: Status -5")，也就是GX_STATUS_INVALID_PARAMETER 用户传入图像地址指针为NULL，请你帮我解决一下，谢谢！

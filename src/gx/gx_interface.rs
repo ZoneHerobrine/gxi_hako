@@ -63,15 +63,13 @@ impl GXInterface {
         }
     }
     
-    pub unsafe fn gx_get_image(&self, device: GX_DEV_HANDLE, frame_data: &mut GX_FRAME_DATA, timeout: i32) -> Result<i32, CameraError> {
+    pub unsafe fn gx_get_image(&self, device: GX_DEV_HANDLE, frame_data: &mut GX_FRAME_DATA, timeout: i32) -> Result<(), CameraError> {
         let gx_get_image: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, frame_data: *mut GX_FRAME_DATA, timeout: i32) -> i32> = self.lib.get(b"GXGetImage")?;
+        
         let status = gx_get_image(device, frame_data as *mut _, timeout);
-        if status == GX_STATUS_LIST::GX_STATUS_SUCCESS as i32 {
-            Ok(status)
-        } else {
-            // Err(libloading::Error::from(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to get image: Status {}", status))))
-            // Err(format!("Failed to get image: Status {}", status))
-            Err(CameraError::OperationError(format!("Failed to get image: Status {}", status)))
+        match status {
+            GX_STATUS_SUCCESS => Ok(()),
+            _ => Err(CameraError::OperationError(format!("Failed to get image: Status {}", status)))
         }
     }
 

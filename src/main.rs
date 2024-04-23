@@ -1,6 +1,8 @@
 use std::mem::size_of;
 use std::ffi::{CStr, CString,c_char,c_uint,c_int,c_void};
-
+use std::thread::sleep;
+use image::{ImageBuffer, Luma};
+use std::slice;
 mod gx;
 
 use gx::gx_const::*;
@@ -27,7 +29,32 @@ fn print_device_info(device_info: &GX_DEVICE_BASE_INFO) {
     println!("Device Class: {:?}", device_info.deviceClass);
     println!("-----------------------");
 }
+fn process_image_data(frame_data: &GX_FRAME_DATA) -> Result<(), Box<dyn std::error::Error>> {
+    // Safety check
+    if frame_data.p_img_buf.is_null() {
+        return Err("Null pointer received for image buffer.".into());
+    }
 
+    // Assuming pixel format 1 corresponds to a single byte per pixel grayscale image
+    let pixel_length = frame_data.width * frame_data.height; // Total pixels
+    if frame_data.img_size as i32 != pixel_length {
+        return Err("Image size does not match dimensions.".into());
+    }
+
+    // Safe conversion of raw pointer to slice
+    let buffer: &[u8] = unsafe {
+        slice::from_raw_parts(frame_data.p_img_buf as *const u8, frame_data.img_size as usize)
+    };
+
+    // Create an image buffer from the raw slice
+    let img = ImageBuffer::<Luma<u8>, _>::from_raw(frame_data.width as u32, frame_data.height as u32, buffer)
+        .ok_or("Failed to create image buffer.")?;
+
+    // Save the image to a file
+    img.save("output_image.png")?;
+
+    Ok(())
+}
 
 fn main() {
     unsafe {
@@ -70,7 +97,35 @@ fn main() {
                     // Further operations can be performed here...
 
 
-                    // Assume device handle and other preparation steps are already done
+                    // 假设使用 RGB24 格式，每个像素占用3字节
+                    
+//         let bytes_per_pixel = 3; // Assuming RGB8 pixel format
+//         let payload_size = 2048 * 1536 * bytes_per_pixel; // Ensure bytes_per_pixel matches the pixel format
+// // 分配图像缓存区，此处使用 Vec<u8> 并确保它的生命周期足够长
+// let mut buffer = vec![1u8; payload_size as usize];
+// // 安全地转换 Vec<u8> 的内存地址为 *mut u8，适用于 FFI 调用
+// let buffer_ptr = buffer.as_mut_ptr();
+//         let mut frame_data = GX_FRAME_DATA {
+//             status: 0,
+//             frame_id: 0,
+//             p_img_buf: buffer_ptr as *mut c_void,
+//             img_size: payload_size as i32,
+//             width: 2048,
+//             height: 1536,
+//             pixel_format: 0,
+//             timestamp: 0,
+//         };
+
+        // You need to ensure the buffer is correctly allocated according to the expected image size
+        // Example for allocation:
+        // let payload_size = 4096 * 3000; // Adjust size accordingly
+        // let mut buffer = vec![7u8; payload_size];
+        // frame_data.p_img_buf = buffer.as_mut_ptr() as *mut u8;
+        // frame_data.img_size = payload_size;
+        // frame_data.p_img_buf = buffer.as_mut_ptr();
+        // frame_data.img_size = payload_size;
+
+        // Prepare the frame data struct
         let mut frame_data = GX_FRAME_DATA {
             status: 0,
             frame_id: 0,
@@ -78,25 +133,34 @@ fn main() {
             img_size: 0,
             width: 2048,
             height: 1536,
-            pixel_format: 0,
+            pixel_format: 0x0001,
             timestamp: 0,
+            offset_x: 0,
+            offset_y: 0,
+            reserved: [0],
         };
 
-        // You need to ensure the buffer is correctly allocated according to the expected image size
-        // Example for allocation:
-        let payload_size = 4096 * 3000; // Adjust size accordingly
-        let mut buffer = vec![7u8; payload_size];
-        frame_data.p_img_buf = buffer.as_mut_ptr() as *mut c_void;
-        frame_data.img_size = payload_size;
+        // Allocate buffer for the image
+        let mut buffer = vec![0u8; 2048 * 1536]; // Example size, adjust accordingly
+        frame_data.p_img_buf = buffer.as_mut_ptr() as *mut _;
+        frame_data.img_size = (2048 * 1536 * std::mem::size_of::<u8>()) as i32;
 
         gx.gx_send_command(device_handle, GX_FEATURE_ID::GX_COMMAND_ACQUISITION_START).expect("Failed to send command");
         // Getting an image
+
+        // Wait for the image to be ready
+        sleep(std::time::Duration::from_secs(1));
+
         gx.gx_get_image(device_handle, &mut frame_data, 1000).expect("Failed to get image");
+
+
+        println!("Image received. Status: {:?}", frame_data);
+        process_image_data(&frame_data).expect("Failed to process image data");
 
         gx.gx_send_command(device_handle, GX_FEATURE_ID::GX_COMMAND_ACQUISITION_STOP).expect("Failed to send command");
         // Processing the image
         // For example, accessing the buffer: &buffer[..]
-        let buffer = unsafe { Vec::from_raw_parts(frame_data.p_img_buf, payload_size, payload_size) };
+        // let buffer = unsafe { Vec::from_raw_parts(frame_data.p_img_buf, payload_size, payload_size) };
 
 
                     // Close the device
