@@ -58,6 +58,9 @@ impl GXInterface {
         
         let status = gx_send_command(device, feature_id);
         match status {
+            
+            // 这里实际上打印出来是-10
+            // 调整了enum定义，已修复，但这里的错误处理是有问题的
             GX_STATUS_SUCCESS => Ok(()),
             _ => Err(CameraError::OperationError(format!("GXSendCommand failed with status: {}", status))),
         }
@@ -84,3 +87,42 @@ impl GXInterface {
         Ok(())
     }
 }
+
+// 在上述代码中gx_get_image还有gx_send_command的封装和错误处理有些问题，请你仿照其他的函数进行一下改写,中文讲解，谢谢！
+
+// 相关定义如下
+// pub type GX_DEV_HANDLE = *mut c_void;
+// #[repr(C)]
+// #[derive(Debug, Clone)]
+// pub struct GX_FRAME_DATA {
+//     pub status: u32,            // Image acquisition status
+//     pub frame_id: u64,          // Frame ID
+//     pub p_img_buf: *mut c_void, // Pointer to the image buffer
+//     pub img_size: i32,          // Size of the image buffer, adjusted to i32 to match C definition
+//     pub width: i32,             // Image width, adjusted to i32 to match C definition
+//     pub height: i32,            // Image height, adjusted to i32 to match C definition
+//     pub pixel_format: i32,      // Pixel format, adjusted to i32 to match C definition
+//     pub timestamp: u64,         // Timestamp of the frame
+//     pub offset_x: i32,          // X offset of the image
+//     pub offset_y: i32,          // Y offset of the image
+//     pub reserved: [i32; 1],     // Reserved, array of 1 i32 to match C definition
+// }
+// #[repr(C)]
+// #[derive(Debug, Clone, Copy)]
+// pub enum GX_STATUS_LIST {
+//     GX_STATUS_SUCCESS = 0,
+//     GX_STATUS_ERROR = -1,
+//     GX_STATUS_NOT_FOUND_TL = -2,
+//     GX_STATUS_NOT_FOUND_DEVICE = -3,
+//     GX_STATUS_OFFLINE = -4,
+//     GX_STATUS_INVALID_PARAMETER = -5,
+//     GX_STATUS_INVALID_HANDLE = -6,
+//     GX_STATUS_INVALID_CALL = -7,
+//     GX_STATUS_INVALID_ACCESS = -8,
+//     GX_STATUS_NEED_MORE_BUFFER = -9,
+//     GX_STATUS_ERROR_TYPE = -10,
+//     GX_STATUS_OUT_OF_RANGE = -11,
+//     GX_STATUS_NOT_IMPLEMENTED = -12,
+//     GX_STATUS_NOT_INIT_API = -13,
+//     GX_STATUS_TIMEOUT = -14,
+// }
