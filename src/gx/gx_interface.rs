@@ -22,6 +22,28 @@ pub struct GXInterface {
     lib: Library,
 }
 
+fn convert_to_gx_status(status_code: i32) -> GX_STATUS_LIST {
+    match status_code {
+        0 => GX_STATUS_LIST::GX_STATUS_SUCCESS,
+        -1 => GX_STATUS_LIST::GX_STATUS_ERROR,
+        -2 => GX_STATUS_LIST::GX_STATUS_NOT_FOUND_TL,
+        -3 => GX_STATUS_LIST::GX_STATUS_NOT_FOUND_DEVICE,
+        -4 => GX_STATUS_LIST::GX_STATUS_OFFLINE,
+        -5 => GX_STATUS_LIST::GX_STATUS_INVALID_PARAMETER,
+        -6 => GX_STATUS_LIST::GX_STATUS_INVALID_HANDLE,
+        -7 => GX_STATUS_LIST::GX_STATUS_INVALID_CALL,
+        -8 => GX_STATUS_LIST::GX_STATUS_INVALID_ACCESS,
+        -9 => GX_STATUS_LIST::GX_STATUS_NEED_MORE_BUFFER,
+        -10 => GX_STATUS_LIST::GX_STATUS_ERROR_TYPE,
+        -11 => GX_STATUS_LIST::GX_STATUS_OUT_OF_RANGE,
+        -12 => GX_STATUS_LIST::GX_STATUS_NOT_IMPLEMENTED,
+        -13 => GX_STATUS_LIST::GX_STATUS_NOT_INIT_API,
+        -14 => GX_STATUS_LIST::GX_STATUS_TIMEOUT,
+        _ => GX_STATUS_LIST::GX_STATUS_ERROR, // Default error if unknown status code
+    }
+}
+
+
 impl GXInterface {
     pub unsafe fn new(library_path: &str) -> Result<Self, libloading::Error> {
         let lib = Library::new(library_path)?;
@@ -48,7 +70,6 @@ impl GXInterface {
         Ok(gx_open_device_by_index(index, device))
     }
 
-    // Function to send a command to the camera
     pub unsafe fn gx_send_command(
         &self, 
         device: GX_DEV_HANDLE, 
@@ -56,25 +77,49 @@ impl GXInterface {
     ) -> Result<(), CameraError> {
         let gx_send_command: Symbol<unsafe extern "C" fn(GX_DEV_HANDLE, GX_FEATURE_ID) -> i32> = self.lib.get(b"GXSendCommand")?;
         
-        let status = gx_send_command(device, feature_id);
+        let status_code = gx_send_command(device, feature_id);
+        let status = convert_to_gx_status(status_code);
         match status {
-            
-            // 这里实际上打印出来是-10
-            // 调整了enum定义，已修复，但这里的错误处理是有问题的
-            GX_STATUS_SUCCESS => Ok(()),
-            _ => Err(CameraError::OperationError(format!("GXSendCommand failed with status: {}", status))),
+            GX_STATUS_LIST::GX_STATUS_SUCCESS => Ok(()),
+            _ => Err(CameraError::OperationError(format!("GXSendCommand failed with status: {}", status_code))),
         }
     }
     
     pub unsafe fn gx_get_image(&self, device: GX_DEV_HANDLE, frame_data: &mut GX_FRAME_DATA, timeout: i32) -> Result<(), CameraError> {
         let gx_get_image: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, frame_data: *mut GX_FRAME_DATA, timeout: i32) -> i32> = self.lib.get(b"GXGetImage")?;
         
-        let status = gx_get_image(device, frame_data as *mut _, timeout);
+        let status_code = gx_get_image(device, frame_data as *mut _, timeout);
+        let status = convert_to_gx_status(status_code);
         match status {
-            GX_STATUS_SUCCESS => Ok(()),
-            _ => Err(CameraError::OperationError(format!("Failed to get image: Status {}", status)))
+            GX_STATUS_LIST::GX_STATUS_SUCCESS => Ok(()),
+            _ => Err(CameraError::OperationError(format!("Failed to get image with status: {}", status_code)))
         }
     }
+    
+    // Function to send a command to the camera
+    // pub unsafe fn gx_send_command(
+    //     &self, 
+    //     device: GX_DEV_HANDLE, 
+    //     feature_id: GX_FEATURE_ID
+    // ) -> Result<(), CameraError> {
+    //     let gx_send_command: Symbol<unsafe extern "C" fn(GX_DEV_HANDLE, GX_FEATURE_ID) -> i32> = self.lib.get(b"GXSendCommand")?;
+        
+    //     let status = gx_send_command(device, feature_id);
+    //     match status {
+    //         0 => Ok(()),
+    //         _ => Err(CameraError::OperationError(format!("GXSendCommand failed with status: {}", status))),
+    //     }
+    // }
+    
+    // pub unsafe fn gx_get_image(&self, device: GX_DEV_HANDLE, frame_data: &mut GX_FRAME_DATA, timeout: i32) -> Result<(), CameraError> {
+    //     let gx_get_image: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, frame_data: *mut GX_FRAME_DATA, timeout: i32) -> i32> = self.lib.get(b"GXGetImage")?;
+        
+    //     let status = gx_get_image(device, frame_data as *mut _, timeout);
+    //     match status {
+    //         0 => Ok(()),
+    //         _ => Err(CameraError::OperationError(format!("Failed to get image: Status {}", status)))
+    //     }
+    // }
 
     pub unsafe fn gx_close_device(&self, device: GX_DEV_HANDLE) -> Result<i32, libloading::Error> {
         let gx_close_device: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE) -> i32> = self.lib.get(b"GXCloseDevice")?;
