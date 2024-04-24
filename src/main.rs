@@ -3,8 +3,8 @@ use std::ffi::{CStr, CString,c_char,c_uint,c_int,c_void};
 use std::thread::sleep;
 use image::{ImageBuffer, Luma};
 use std::slice;
-mod gx;
 
+mod gx;
 use gx::gx_const::*;
 use gx::gx_enum::*;
 use gx::gx_struct::*;
@@ -58,7 +58,8 @@ fn process_image_data(frame_data: &GX_FRAME_DATA) -> Result<(), Box<dyn std::err
 
 fn main() {
     unsafe {
-        let gx = GXInterface::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
+        // let gx = GXInterface::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
+        let gx = GXInterface::new("GxIAPI.dll").expect("Failed to load library");
         gx.gx_init_lib().expect("Failed to initialize library");
 
         let mut device_num = 0;
