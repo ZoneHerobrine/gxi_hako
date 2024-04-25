@@ -1,3 +1,4 @@
+// 我想要在接下来已经实现的代码的基础上，进一步开发上述的C例程之中的功能，请你帮助我，谢谢！给出开发好的代码
 use image::{
     error::ImageError, error::ParameterError, error::ParameterErrorKind, ImageBuffer, Luma,
 };
@@ -15,6 +16,10 @@ use gx::gx_handle::*;
 use gx::gx_interface::*;
 use gx::gx_pixel_format::*;
 use gx::gx_struct::*;
+
+extern "C" fn frame_callback(p_frame_data: *mut GX_FRAME_CALLBACK_PARAM) {
+    println!("Frame callback triggered.");
+}
 
 fn print_device_info(device_info: &GX_DEVICE_BASE_INFO) {
     let vendor_name = std::str::from_utf8(&device_info.szVendorName).unwrap_or("[Invalid UTF-8]");
@@ -37,8 +42,8 @@ fn print_device_info(device_info: &GX_DEVICE_BASE_INFO) {
 
 fn main() {
     unsafe {
-        // let gx = GXInterface::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
-        let gx = GXInterface::new("GxIAPI.dll").expect("Failed to load library");
+        let gx = GXInterface::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
+        // let gx = GXInterface::new("GxIAPI.dll").expect("Failed to load library");
         gx.gx_init_lib().expect("Failed to initialize library");
 
         let mut device_num = 0;
@@ -91,21 +96,27 @@ fn main() {
                         first_device_sn.trim_end_matches(char::from(0))
                     );
 
+                    let reg_result = gx.gx_register_capture_callback(device_handle, frame_callback);
+                    match reg_result {
+                        Ok(_) => println!("Capture callback registered successfully."),
+                        Err(e) => eprintln!("Failed to register capture callback: {:?}", e),
+                    }
+
                     gx.gx_send_command(device_handle, GX_FEATURE_ID::GX_COMMAND_ACQUISITION_START)
                         .expect("Failed to send command");
 
                     // Getting an image
                     // 在这里写获取图像的代码
-                    let pixel_size = 2; // BayerRg8、Mono8 格式下每像素1字节
+                    let pixel_size = 1; // BayerRg8、Mono8 格式下每像素1字节
                     let image_size = 2048 * 1536 * pixel_size; // 图像宽*高*每像素字节数
                     let mut image_buffer = vec![1u8; image_size]; // 分配图像缓冲区
                     let mut frame_data = GX_FRAME_DATA {
                         nStatus: GX_FRAME_STATUS::GX_FRAME_STATUS_SUCCESS,
-                        pImgBuf: image_buffer.as_mut_ptr() as *mut u8, // 设置图像数据指针
+                        pImgBuf: image_buffer.as_mut_ptr() as *mut c_void, // 设置图像数据指针
                         nWidth: 2048,
                         nHeight: 1536,
                         // nPixelFormat: PixelFormatEntry::Mono8 as i32,
-                        nPixelFormat: 17825795,
+                        nPixelFormat: 17301505,
                         nImgSize: image_size as i32,
                         nFrameID: 0,
                         nTimestamp: 0,
@@ -114,67 +125,28 @@ fn main() {
                         reserved: [3],
                     };
 
-                    println!("Attempting to capture image...");
-                    println!("Device Handle: {:?}", device_handle);
-                    println!("Frame Data Pointer: {:?}", frame_data);
-
-                    let mut width_value: i64 = 1;
-                    let get_int_result =
-                        gx.gx_get_int(device_handle, GX_FEATURE_ID::GX_INT_WIDTH, &mut width_value);
-                    match get_int_result {
-                        Ok(_) => println!("Width: {}", width_value),
-                        Err(e) => eprintln!("Failed to get width: {:?}", e),
-                    }
-                    let mut height_value: i64 = 1;
-                    let get_int_result = gx.gx_get_int(
-                        device_handle,
-                        GX_FEATURE_ID::GX_INT_HEIGHT,
-                        &mut height_value,
-                    );
-                    match get_int_result {
-                        Ok(_) => println!("Height: {}", height_value),
-                        Err(e) => eprintln!("Failed to get width: {:?}", e),
-                    }
-
-                    let mut payload_size: i64 = 1;
-                    let get_int_result = gx.gx_get_int(
-                        device_handle,
-                        GX_FEATURE_ID::GX_INT_PAYLOAD_SIZE,
-                        &mut payload_size,
-                    );
-                    match get_int_result {
-                        Ok(_) => println!("Payload Size: {}", payload_size),
-                        Err(e) => eprintln!("Failed to get width: {:?}", e),
-                    }
-
-                    let mut pixel_format: i64 = 1;
-                    let get_enum_result = gx.gx_get_enum(
-                        device_handle,
-                        GX_FEATURE_ID::GX_ENUM_PIXEL_FORMAT,
-                        &mut pixel_format,
-                    );
-                    match get_enum_result {
-                        Ok(_) => println!("Pixel Format: {}", pixel_format),
-                        Err(e) => eprintln!("Failed to get width: {:?}", e),
-                    }
-
-                    sleep(std::time::Duration::from_secs(1));
-
-                    loop {
-                        let result = gx.gx_get_image(device_handle, &mut frame_data, 100);
-                        match result {
-                            Ok(_) => {
-                                println!("Image captured successfully.");
-                                break;
-                            }
-                            Err(e) => eprintln!("Failed to capture image: {:?}", e),
+                        // let result = gx.gx_get_image(device_handle, &mut frame_data, 100);
+                        // match result {
+                        //     Ok(_) => {
+                        //         println!("Image captured successfully.");
+                        //     }
+                        //     Err(e) => eprintln!("Failed to capture image: {:?}", e),
+                        // }
+                        loop {
+                            sleep(Duration::from_secs(10));
+                            break;
                         }
-                        sleep(Duration::from_millis(100));
-                    }
+
 
                     gx.gx_send_command(device_handle, GX_FEATURE_ID::GX_COMMAND_ACQUISITION_STOP)
                         .expect("Failed to send command");
                     // Processing the image
+
+                    let unregeister_result = gx.gx_unregister_capture_callback(device_handle);
+                    match unregeister_result {
+                        Ok(_) => println!("Capture callback unregistered successfully."),
+                        Err(e) => eprintln!("Failed to unregister capture callback: {:?}", e),
+                    }
 
                     // Close the device
                     gx.gx_close_device(device_handle)

@@ -1,9 +1,12 @@
 use libloading::{Library, Symbol};
 use std::ffi::{CStr, c_char, c_void};
+
 use crate::gx::gx_handle::*;
 use crate::gx::gx_struct::*;
 use crate::gx::gx_const::*;
 use crate::gx::gx_enum::*;
+
+pub type GXCaptureCallBack = extern "C" fn(pFrameData: *mut GX_FRAME_CALLBACK_PARAM);
 
 // Define a custom error type
 #[derive(Debug)]
@@ -122,17 +125,27 @@ impl GXInterface {
         Ok(gx_get_enum(device, feature_id, enum_value))
     }
 
-    pub unsafe fn gx_get_buffer(&self,device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, p_buffer: *mut u8, p_size: usize) -> Result<(), CameraError> {
-        let gx_get_buffer: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE,feature_id: GX_FEATURE_ID, p_buffer: *mut u8, p_size: usize) -> i32> = self.lib.get(b"GXGetBuffer")?;
-        println!("p_frame_buffer: {:?}", p_buffer);
-        println!("frame_buffer: {:?}", *p_buffer);
-        let status_code = gx_get_buffer(device,feature_id, p_buffer, p_size);
+
+    pub unsafe fn gx_register_capture_callback(&self, device: *mut c_void, callback: GXCaptureCallBack) -> Result<(), CameraError> {
+        let gx_register_capture_callback: Symbol<unsafe extern "C" fn(device: *mut c_void, user_param: *mut c_void, callback: GXCaptureCallBack) -> i32> = self.lib.get(b"GXRegisterCaptureCallback")?;
+        let status_code = gx_register_capture_callback(device, std::ptr::null_mut(), callback);
         let status = convert_to_gx_status(status_code);
         match status {
             GX_STATUS_LIST::GX_STATUS_SUCCESS => Ok(()),
-            _ => Err(CameraError::OperationError(format!("Failed to get buffer with status: {:?}", status)))
+            _ => Err(CameraError::OperationError(format!("Failed to register_callback with status: {:?}", status)))
         }
     }
+
+    pub unsafe fn gx_unregister_capture_callback(&self, device: *mut c_void) -> Result<(), CameraError> {
+        let gx_unregister_capture_callback: Symbol<unsafe extern "C" fn(device: *mut c_void) -> i32> = self.lib.get(b"GXUnregisterCaptureCallback")?;
+        let status_code = gx_unregister_capture_callback(device);
+        let status = convert_to_gx_status(status_code);
+        match status {
+            GX_STATUS_LIST::GX_STATUS_SUCCESS => Ok(()),
+            _ => Err(CameraError::OperationError(format!("Failed to unregister_callback with status: {:?}", status)))
+        }
+    }
+
 
 }
 

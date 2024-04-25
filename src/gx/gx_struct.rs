@@ -62,7 +62,7 @@ pub struct GX_FRAME_DATA {
     pub nStatus: GX_FRAME_STATUS,            // Image acquisition status
     // pub nStatus: u32,
     pub nFrameID: u64,          // Frame ID
-    pub pImgBuf: *mut u8,   // Pointer to the image buffer
+    pub pImgBuf: *const c_void,   // Pointer to the image buffer
     pub nImgSize: i32,          // Size of the image buffer, adjusted to i32 to match C definition
     pub nWidth: i32,             // Image width, adjusted to i32 to match C definition
     pub nHeight: i32,            // Image height, adjusted to i32 to match C definition
