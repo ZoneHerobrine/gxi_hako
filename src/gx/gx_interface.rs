@@ -108,7 +108,6 @@ impl GXInterface {
     }
 }
 
-// 在上述代码中gx_get_image还有gx_send_command的封装和错误处理有些问题，请你仿照其他的函数进行一下改写,中文讲解，谢谢！
 
 // 相关定义如下
 // pub type GX_DEV_HANDLE = *mut c_void;

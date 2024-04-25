@@ -31,32 +31,6 @@ fn print_device_info(device_info: &GX_DEVICE_BASE_INFO) {
     println!("-----------------------");
 }
 
-// Function to save grayscale image data as a PNG file
-fn save_grayscale_image(buffer: &[u8], width: u32, height: u32, path: &Path) -> image::ImageResult<()> {
-    let img = ImageBuffer::<Luma<u8>, _>::from_raw(width, height, buffer)
-        .ok_or(ImageError::Parameter(ParameterError::from_kind(ParameterErrorKind::DimensionMismatch)))?;
-    img.save(path)
-}
-
-// High-level function to handle image capture and saving
-fn capture_and_save_image(frame_data: GX_FRAME_DATA) -> image::ImageResult<()> {
-    if frame_data.nStatus != 0 {
-        return Err(ImageError::Parameter(ParameterError::from_kind(ParameterErrorKind::DimensionMismatch)));
-    }
-
-    let width = frame_data.nWidth as u32;
-    let height = frame_data.nHeight as u32;
-
-    // Convert the raw pointer back into a Rust slice for safety over the buffer's lifetime
-    let buffer_size = frame_data.nImgSize as usize;
-    let buffer_slice = unsafe {
-        slice::from_raw_parts(frame_data.pImgBuf as *const u8, buffer_size)
-    };
-
-    // Save the image data to a file
-    let path = Path::new("output_image.png");
-    save_grayscale_image(buffer_slice, width, height, &path)
-}
 
 fn main() {
     unsafe {
@@ -114,50 +88,42 @@ fn main() {
                         first_device_sn.trim_end_matches(char::from(0))
                     );
 
-                    let mut frame_data = vec![
-                    GX_FRAME_DATA {
+                    gx.gx_send_command(device_handle, GX_FEATURE_ID::GX_COMMAND_ACQUISITION_START)
+                        .expect("Failed to send command");
+
+                    // Getting an image
+                    // 在这里写获取图像的代码
+                    let pixel_size = 1; // BayerRg8 格式下每像素1字节
+let image_size = 640 * 480 * pixel_size; // 图像宽*高*每像素字节数
+                    let mut image_buffer = vec![0u8; image_size]; // 分配图像缓冲区
+                    let mut frame_data = GX_FRAME_DATA {
                         nStatus: 0,
-                        nFrameID: 0,
-                        pImgBuf: std::ptr::null_mut(),
-                        nImgSize: 3145728,
-                        nWidth: 2048,
-                        nHeight: 1536,
+                        pImgBuf: image_buffer.as_mut_ptr() as *mut u8, // 设置图像数据指针
+                        nWidth: 640,
+                        nHeight: 480,
                         nPixelFormat: PixelFormatEntry::BayerRg8 as i32,
+                        nImgSize: image_size as i32,
+                        nFrameID: 0,
                         nTimestamp: 0,
                         nOffsetX: 0,
                         nOffsetY: 0,
                         reserved: [0],
-                    }];
+                    };
 
-                    // Allocate buffer for the image
+                    println!("Attempting to capture image...");
+                    println!("Device Handle: {:?}", device_handle);
+                    println!("Frame Data Pointer: {:?}", frame_data);
 
-                    let img_width = 640;
-                    let img_height = 480;
-                    let pixel_size = 3;
-                    let mut buffer = vec![7u8; img_width * img_height * pixel_size]; // Example size, adjust accordingly
-                    frame_data[0].nWidth = img_width as i32;
-                    frame_data[0].nHeight = img_height as i32;
-                    frame_data[0].pImgBuf = buffer.as_mut_ptr();
-                    frame_data[0].nImgSize = (img_width * img_height * pixel_size * std::mem::size_of::<u8>()) as i32;
-
-                    gx.gx_send_command(device_handle, GX_FEATURE_ID::GX_COMMAND_ACQUISITION_START)
-                        .expect("Failed to send command");
-                    // Getting an image
-
-                    gx.gx_get_image(device_handle, frame_data.as_mut_ptr(), 1000)
-                        .expect("Failed to get image");
+                    let result = gx.gx_get_image(device_handle, &mut frame_data, 1000);
+                    match result {
+                        Ok(_) => println!("Image captured successfully."),
+                        Err(e) => eprintln!("Failed to capture image: {:?}", e),
+                    }
+                    
 
                     gx.gx_send_command(device_handle, GX_FEATURE_ID::GX_COMMAND_ACQUISITION_STOP)
                         .expect("Failed to send command");
                     // Processing the image
-
-                    match capture_and_save_image(frame_data[0].clone()) {
-                        Ok(()) => println!("Image capture and save successful."),
-                        Err(e) => eprintln!("Error capturing and saving image: {:?}", e),
-                    } // 拿出来还是纯黑的，这个还很要修一段时间
-
-                    println!("Image received. Status: {:?}", frame_data[0].clone());
-
 
                     // Close the device
                     gx.gx_close_device(device_handle)
