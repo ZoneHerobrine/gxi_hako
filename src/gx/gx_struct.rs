@@ -59,16 +59,17 @@ pub struct GX_FRAME_CALLBACK_PARAM {
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct GX_FRAME_DATA {
-    pub status: u32,            // Image acquisition status
-    pub frame_id: u64,          // Frame ID
-    pub p_img_buf: *mut c_void, // Pointer to the image buffer
-    pub img_size: i32,          // Size of the image buffer, adjusted to i32 to match C definition
-    pub width: i32,             // Image width, adjusted to i32 to match C definition
-    pub height: i32,            // Image height, adjusted to i32 to match C definition
-    pub pixel_format: i32,      // Pixel format, adjusted to i32 to match C definition
-    pub timestamp: u64,         // Timestamp of the frame
-    pub offset_x: i32,          // X offset of the image
-    pub offset_y: i32,          // Y offset of the image
+    // pub nStatus: GX_FRAME_STATUS,            // Image acquisition status
+    pub nStatus: u32,
+    pub nFrameID: u64,          // Frame ID
+    pub pImgBuf: *mut u8,       // Pointer to the image buffer
+    pub nImgSize: i32,          // Size of the image buffer, adjusted to i32 to match C definition
+    pub nWidth: i32,             // Image width, adjusted to i32 to match C definition
+    pub nHeight: i32,            // Image height, adjusted to i32 to match C definition
+    pub nPixelFormat: i32,      // Pixel format, adjusted to i32 to match C definition
+    pub nTimestamp: u64,         // Timestamp of the frame
+    pub nOffsetX: i32,          // X offset of the image
+    pub nOffsetY: i32,          // Y offset of the image
     pub reserved: [i32; 1],     // Reserved, array of 1 i32 to match C definition
 }
 // pub struct GX_FRAME_DATA {

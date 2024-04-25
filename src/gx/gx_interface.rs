@@ -85,10 +85,10 @@ impl GXInterface {
         }
     }
     
-    pub unsafe fn gx_get_image(&self, device: GX_DEV_HANDLE, frame_data: &mut GX_FRAME_DATA, timeout: i32) -> Result<(), CameraError> {
-        let gx_get_image: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, frame_data: *mut GX_FRAME_DATA, timeout: i32) -> i32> = self.lib.get(b"GXGetImage")?;
+    pub unsafe fn gx_get_image(&self, device: GX_DEV_HANDLE, p_frame_data: *mut GX_FRAME_DATA, timeout: i32) -> Result<(), CameraError> {
+        let gx_get_image: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, p_frame_data: *mut GX_FRAME_DATA, timeout: i32) -> i32> = self.lib.get(b"GXGetImage")?;
         
-        let status_code = gx_get_image(device, frame_data as *mut _, timeout);
+        let status_code = gx_get_image(device, p_frame_data, timeout);
         let status = convert_to_gx_status(status_code);
         match status {
             GX_STATUS_LIST::GX_STATUS_SUCCESS => Ok(()),
@@ -96,31 +96,6 @@ impl GXInterface {
         }
     }
     
-    // Function to send a command to the camera
-    // pub unsafe fn gx_send_command(
-    //     &self, 
-    //     device: GX_DEV_HANDLE, 
-    //     feature_id: GX_FEATURE_ID
-    // ) -> Result<(), CameraError> {
-    //     let gx_send_command: Symbol<unsafe extern "C" fn(GX_DEV_HANDLE, GX_FEATURE_ID) -> i32> = self.lib.get(b"GXSendCommand")?;
-        
-    //     let status = gx_send_command(device, feature_id);
-    //     match status {
-    //         0 => Ok(()),
-    //         _ => Err(CameraError::OperationError(format!("GXSendCommand failed with status: {}", status))),
-    //     }
-    // }
-    
-    // pub unsafe fn gx_get_image(&self, device: GX_DEV_HANDLE, frame_data: &mut GX_FRAME_DATA, timeout: i32) -> Result<(), CameraError> {
-    //     let gx_get_image: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, frame_data: *mut GX_FRAME_DATA, timeout: i32) -> i32> = self.lib.get(b"GXGetImage")?;
-        
-    //     let status = gx_get_image(device, frame_data as *mut _, timeout);
-    //     match status {
-    //         0 => Ok(()),
-    //         _ => Err(CameraError::OperationError(format!("Failed to get image: Status {}", status)))
-    //     }
-    // }
-
     pub unsafe fn gx_close_device(&self, device: GX_DEV_HANDLE) -> Result<i32, libloading::Error> {
         let gx_close_device: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE) -> i32> = self.lib.get(b"GXCloseDevice")?;
         Ok(gx_close_device(device))
