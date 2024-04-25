@@ -47,18 +47,6 @@ extern "C" fn frame_callback(p_frame_data: *mut GX_FRAME_CALLBACK_PARAM) {
             }
         }
     }
-    // unsafe {
-    //     let frame_data = &*p_frame_data;
-    //     if frame_data.status == 0 { // 假设0是成功的状态
-    //         let data = slice::from_raw_parts(frame_data.pImgBuf as *const u8, frame_data.nImgSize as usize);
-    //         let mat = core::Mat::new_rows_cols_with_data(frame_data.nHeight, frame_data.nWidth, data).unwrap();
-
-    //         highgui::imshow("Camera", &mat).unwrap();
-    //         if highgui::wait_key(10).unwrap() > 0 {
-    //             highgui::destroy_window("Camera").unwrap();
-    //         }
-    //     }
-    // }
 }
 
 fn print_device_info(device_info: &GX_DEVICE_BASE_INFO) {
@@ -81,7 +69,6 @@ fn print_device_info(device_info: &GX_DEVICE_BASE_INFO) {
 }
 
 fn main() {
-    highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
     unsafe {
         let gx = GXInterface::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
         // let gx = GXInterface::new("GxIAPI.dll").expect("Failed to load library");
@@ -137,22 +124,23 @@ fn main() {
                         first_device_sn.trim_end_matches(char::from(0))
                     );
 
-                    let reg_result = gx.gx_register_capture_callback(device_handle, frame_callback);
-                    match reg_result {
-                        Ok(_) => println!("Capture callback registered successfully."),
-                        Err(e) => eprintln!("Failed to register capture callback: {:?}", e),
-                    }
+                    // let reg_result = gx.gx_register_capture_callback(device_handle, frame_callback);
+                    // match reg_result {
+                    //     Ok(_) => println!("Capture callback registered successfully."),
+                    //     Err(e) => eprintln!("Failed to register capture callback: {:?}", e),
+                    // }
 
                     gx.gx_send_command(device_handle, GX_FEATURE_ID::GX_COMMAND_ACQUISITION_START)
                         .expect("Failed to send command");
 
                     // Getting an image
                     // 在这里写获取图像的代码
+
                     let pixel_size = 1; // BayerRg8、Mono8 格式下每像素1字节
                     let image_size = 2048 * 1536 * pixel_size; // 图像宽*高*每像素字节数
                     let mut image_buffer = vec![1u8; image_size]; // 分配图像缓冲区
                     let mut frame_data = GX_FRAME_DATA {
-                        nStatus: GX_FRAME_STATUS::GX_FRAME_STATUS_SUCCESS,
+                        nStatus: 0,
                         pImgBuf: image_buffer.as_mut_ptr() as *mut c_void, // 设置图像数据指针
                         nWidth: 2048,
                         nHeight: 1536,
@@ -161,33 +149,33 @@ fn main() {
                         nImgSize: image_size as i32,
                         nFrameID: 0,
                         nTimestamp: 0,
-                        nOffsetX: 0,
-                        nOffsetY: 0,
-                        reserved: [3],
+                        reserved: [17301505],
                     };
 
-                        // let result = gx.gx_get_image(device_handle, &mut frame_data, 100);
-                        // match result {
-                        //     Ok(_) => {
-                        //         println!("Image captured successfully.");
-                        //     }
-                        //     Err(e) => eprintln!("Failed to capture image: {:?}", e),
-                        // }
-                        loop {
-                            sleep(Duration::from_secs(20));
-                            break;
+                        let result = gx.gx_get_image(device_handle, &mut frame_data, 100);
+                        match result {
+                            Ok(_) => {
+                                println!("Image captured successfully.");
+                            }
+                            Err(e) => eprintln!("Failed to capture image: {:?}", e),
                         }
 
+                        
+                    // highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
+                    // loop {
+                    //     sleep(Duration::from_secs(10));
+                    //     break;
+                    // }
 
                     gx.gx_send_command(device_handle, GX_FEATURE_ID::GX_COMMAND_ACQUISITION_STOP)
                         .expect("Failed to send command");
                     // Processing the image
 
-                    let unregeister_result = gx.gx_unregister_capture_callback(device_handle);
-                    match unregeister_result {
-                        Ok(_) => println!("Capture callback unregistered successfully."),
-                        Err(e) => eprintln!("Failed to unregister capture callback: {:?}", e),
-                    }
+                    // let unregeister_result = gx.gx_unregister_capture_callback(device_handle);
+                    // match unregeister_result {
+                    //     Ok(_) => println!("Capture callback unregistered successfully."),
+                    //     Err(e) => eprintln!("Failed to unregister capture callback: {:?}", e),
+                    // }
 
                     // Close the device
                     gx.gx_close_device(device_handle)
