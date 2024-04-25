@@ -93,16 +93,16 @@ fn main() {
 
                     // Getting an image
                     // 在这里写获取图像的代码
-                    let pixel_size = 1; // BayerRg8 格式下每像素1字节
-let image_size = 640 * 480 * pixel_size; // 图像宽*高*每像素字节数
+                    let pixel_size = 1; // BayerRg8、Mono8 格式下每像素1字节
+                    let image_size = 2048 * 1536 * pixel_size; // 图像宽*高*每像素字节数
                     let mut image_buffer = vec![1u8; image_size]; // 分配图像缓冲区
                     let mut frame_data =
                         GX_FRAME_DATA {
                         nStatus: 0,
                         pImgBuf: image_buffer.as_mut_ptr() as *mut u8, // 设置图像数据指针
-                        nWidth: 640,
-                        nHeight: 480,
-                        nPixelFormat: PixelFormatEntry::BayerRg8 as i32,
+                        nWidth: 2048,
+                        nHeight: 1536,
+                        nPixelFormat: PixelFormatEntry::Mono8 as i32,
                         nImgSize: image_size as i32,
                         nFrameID: 0,
                         nTimestamp: 0,
@@ -115,7 +115,14 @@ let image_size = 640 * 480 * pixel_size; // 图像宽*高*每像素字节数
                     println!("Device Handle: {:?}", device_handle);
                     println!("Frame Data Pointer: {:?}", frame_data);
 
-                    let result = gx.gx_get_image(device_handle, &mut frame_data, 1000);
+                    let mut int_value :i64 = 1;
+                    let get_int_result =gx.gx_get_int(device_handle, GX_FEATURE_ID::GX_INT_WIDTH,&mut int_value);
+                    match get_int_result {
+                        Ok(_) => println!("Width: {}", int_value),
+                        Err(e) => eprintln!("Failed to get width: {:?}", e),
+                    }
+
+                    let result = gx.gx_get_image(device_handle, &mut frame_data, 10000);
                     match result {
                         Ok(_) => println!("Image captured successfully."),
                         Err(e) => eprintln!("Failed to capture image: {:?}", e),

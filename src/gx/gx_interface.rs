@@ -108,6 +108,14 @@ impl GXInterface {
         gx_close_lib();
         Ok(())
     }
+
+    // selfadded
+    pub unsafe fn gx_get_int(&self, device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, int_value: *mut i64) -> Result<i32, libloading::Error> {
+        let gx_get_int: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, int_value: *mut i64) -> i32> = self.lib.get(b"GXGetInt")?;
+        println!("int_value: {:?}", int_value);
+        Ok(gx_get_int(device, feature_id, int_value))
+    }
+
 }
 
 
