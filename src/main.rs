@@ -95,8 +95,9 @@ fn main() {
                     // 在这里写获取图像的代码
                     let pixel_size = 1; // BayerRg8 格式下每像素1字节
 let image_size = 640 * 480 * pixel_size; // 图像宽*高*每像素字节数
-                    let mut image_buffer = vec![0u8; image_size]; // 分配图像缓冲区
-                    let mut frame_data = GX_FRAME_DATA {
+                    let mut image_buffer = vec![1u8; image_size]; // 分配图像缓冲区
+                    let mut frame_data =
+                        GX_FRAME_DATA {
                         nStatus: 0,
                         pImgBuf: image_buffer.as_mut_ptr() as *mut u8, // 设置图像数据指针
                         nWidth: 640,

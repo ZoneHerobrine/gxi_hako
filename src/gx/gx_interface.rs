@@ -62,6 +62,7 @@ impl GXInterface {
 
     pub unsafe fn gx_get_all_device_base_info(&self, p_device_info: *mut GX_DEVICE_BASE_INFO, p_buffer_size: *mut usize) -> Result<i32, libloading::Error> {
         let gx_get_all_device_base_info: Symbol<unsafe extern "C" fn(p_device_info: *mut GX_DEVICE_BASE_INFO, p_buffer_size: *mut usize) -> i32> = self.lib.get(b"GXGetAllDeviceBaseInfo")?;
+        println!("p_device_info: {:?}, p_buffer_size: {:?}", p_device_info, p_buffer_size);
         Ok(gx_get_all_device_base_info(p_device_info, p_buffer_size))
     }
 
@@ -81,18 +82,19 @@ impl GXInterface {
         let status = convert_to_gx_status(status_code);
         match status {
             GX_STATUS_LIST::GX_STATUS_SUCCESS => Ok(()),
-            _ => Err(CameraError::OperationError(format!("GXSendCommand failed with status: {}", status_code))),
+            _ => Err(CameraError::OperationError(format!("GXSendCommand failed with status: {:?}", status))),
         }
     }
     
     pub unsafe fn gx_get_image(&self, device: GX_DEV_HANDLE, p_frame_data: *mut GX_FRAME_DATA, timeout: i32) -> Result<(), CameraError> {
         let gx_get_image: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, p_frame_data: *mut GX_FRAME_DATA, timeout: i32) -> i32> = self.lib.get(b"GXGetImage")?;
-        
+        println!("p_frame_data: {:?}", p_frame_data);
+        println!("frame_data: {:?}", *p_frame_data);
         let status_code = gx_get_image(device, p_frame_data, timeout);
         let status = convert_to_gx_status(status_code);
         match status {
             GX_STATUS_LIST::GX_STATUS_SUCCESS => Ok(()),
-            _ => Err(CameraError::OperationError(format!("Failed to get image with status: {}", status_code)))
+            _ => Err(CameraError::OperationError(format!("Failed to get image with status: {:?}", status)))
         }
     }
     
