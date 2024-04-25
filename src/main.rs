@@ -1,7 +1,4 @@
 // 我想要在接下来已经实现的代码的基础上，进一步开发上述的C例程之中的功能，请你帮助我，谢谢！给出开发好的代码
-use image::{
-    error::ImageError, error::ParameterError, error::ParameterErrorKind, ImageBuffer, Luma,
-};
 use opencv::{
     prelude::*,
     highgui,
