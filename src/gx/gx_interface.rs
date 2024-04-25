@@ -116,6 +116,24 @@ impl GXInterface {
         Ok(gx_get_int(device, feature_id, int_value))
     }
 
+    pub unsafe fn gx_get_enum(&self, device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, enum_value: *mut i64) -> Result<i32, libloading::Error> {
+        let gx_get_enum: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, enum_value: *mut i64) -> i32> = self.lib.get(b"GXGetEnum")?;
+        println!("enum_value: {:?}", enum_value);
+        Ok(gx_get_enum(device, feature_id, enum_value))
+    }
+
+    pub unsafe fn gx_get_buffer(&self,device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, p_buffer: *mut u8, p_size: usize) -> Result<(), CameraError> {
+        let gx_get_buffer: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE,feature_id: GX_FEATURE_ID, p_buffer: *mut u8, p_size: usize) -> i32> = self.lib.get(b"GXGetBuffer")?;
+        println!("p_frame_buffer: {:?}", p_buffer);
+        println!("frame_buffer: {:?}", *p_buffer);
+        let status_code = gx_get_buffer(device,feature_id, p_buffer, p_size);
+        let status = convert_to_gx_status(status_code);
+        match status {
+            GX_STATUS_LIST::GX_STATUS_SUCCESS => Ok(()),
+            _ => Err(CameraError::OperationError(format!("Failed to get buffer with status: {:?}", status)))
+        }
+    }
+
 }
 
 

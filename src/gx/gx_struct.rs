@@ -59,8 +59,8 @@ pub struct GX_FRAME_CALLBACK_PARAM {
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct GX_FRAME_DATA {
-    // pub nStatus: GX_FRAME_STATUS,            // Image acquisition status
-    pub nStatus: u32,
+    pub nStatus: GX_FRAME_STATUS,            // Image acquisition status
+    // pub nStatus: u32,
     pub nFrameID: u64,          // Frame ID
     pub pImgBuf: *mut u8,   // Pointer to the image buffer
     pub nImgSize: i32,          // Size of the image buffer, adjusted to i32 to match C definition

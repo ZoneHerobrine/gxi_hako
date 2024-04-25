@@ -103,8 +103,12 @@ pub enum GX_FEATURE_ID{
     // GX_INT_WIDTH                      = 1006 | GX_FEATURE_INT | GX_FEATURE_LEVEL_REMOTE_DEV,     //< Width of the image provided by the device (in pixels).
     // GX_INT_HEIGHT                     = 1007 | GX_FEATURE_INT | GX_FEATURE_LEVEL_REMOTE_DEV,     //< Height of the image provided by the device (in pixels).
     GX_INT_WIDTH = 1006 | 268435456 | 0,
-    GX_INT_HEIGHT = 1007 | 268435456 | 0
+    GX_INT_HEIGHT = 1007 | 268435456 | 0,
+    GX_INT_PAYLOAD_SIZE = 2000 | 268435456 | 0,
 
+    GX_ENUM_PIXEL_SIZE                = 1012 | 805306368 | 0,    //< Total size in bits of a pixel of the image.
+    GX_ENUM_PIXEL_FORMAT              = 1014 | 805306368 | 0,    //< Format of the pixels provided by the device.
+   
     // 下面有进制转换问题，待修复
     //---------------ImageFormat Section--------------------------------
     // GX_INT_SENSOR_WIDTH               = 1000 | GX_FEATURE_INT | GX_FEATURE_LEVEL_REMOTE_DEV,     //< Effective width of the sensor in pixels.
