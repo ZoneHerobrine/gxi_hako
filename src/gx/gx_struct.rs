@@ -1,5 +1,6 @@
 use super::gx_const::*;
 use super::gx_enum::*;
+use std::ffi::c_int;
 use std::ffi::{c_char,c_void};
 
 // 请你放照下面的格式，把上述C开发文档的内容写为rust版本，谢谢！
@@ -42,10 +43,11 @@ pub struct GX_OPEN_PARAM {
 }
 
 #[repr(C)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,Copy)]
 pub struct GX_FRAME_CALLBACK_PARAM {
     pub pUserParam: *mut c_void,
-    pub status: GX_FRAME_STATUS,
+    // pub status: GX_FRAME_STATUS,
+    pub status: c_int,
     pub pImgBuf: *const c_void,
     pub nImgSize: i32,
     pub nWidth: i32,

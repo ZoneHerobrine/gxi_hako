@@ -2,6 +2,13 @@
 use image::{
     error::ImageError, error::ParameterError, error::ParameterErrorKind, ImageBuffer, Luma,
 };
+use opencv::{
+    prelude::*,
+    highgui,
+    imgcodecs,
+    core,
+};
+
 use std::ffi::{c_char, c_int, c_uint, c_void, CStr, CString};
 use std::mem::size_of;
 use std::path::Path;
@@ -19,6 +26,39 @@ use gx::gx_struct::*;
 
 extern "C" fn frame_callback(p_frame_data: *mut GX_FRAME_CALLBACK_PARAM) {
     println!("Frame callback triggered.");
+    println!("Frame status: {:?}", unsafe { (*p_frame_data).status });
+    println!("Frame All: {:?}", unsafe { *p_frame_data });
+    unsafe {
+        let frame_data = &*p_frame_data;
+        if frame_data.status == 0 {
+            let data = slice::from_raw_parts(frame_data.pImgBuf as *const u8, (frame_data.nWidth * frame_data.nHeight) as usize);
+            
+            // 使用正确的函数签名创建Mat对象
+            let mat = core::Mat::new_rows_cols_with_data(
+                frame_data.nHeight, 
+                frame_data.nWidth, 
+                // core::CV_8UC1, 
+                data
+            ).unwrap();
+
+            highgui::imshow("Camera Frame", &mat).unwrap();
+            if highgui::wait_key(10).unwrap() > 0 {
+                highgui::destroy_window("Camera Frame").unwrap();
+            }
+        }
+    }
+    // unsafe {
+    //     let frame_data = &*p_frame_data;
+    //     if frame_data.status == 0 { // 假设0是成功的状态
+    //         let data = slice::from_raw_parts(frame_data.pImgBuf as *const u8, frame_data.nImgSize as usize);
+    //         let mat = core::Mat::new_rows_cols_with_data(frame_data.nHeight, frame_data.nWidth, data).unwrap();
+
+    //         highgui::imshow("Camera", &mat).unwrap();
+    //         if highgui::wait_key(10).unwrap() > 0 {
+    //             highgui::destroy_window("Camera").unwrap();
+    //         }
+    //     }
+    // }
 }
 
 fn print_device_info(device_info: &GX_DEVICE_BASE_INFO) {
@@ -41,6 +81,7 @@ fn print_device_info(device_info: &GX_DEVICE_BASE_INFO) {
 }
 
 fn main() {
+    highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
     unsafe {
         let gx = GXInterface::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
         // let gx = GXInterface::new("GxIAPI.dll").expect("Failed to load library");
@@ -133,7 +174,7 @@ fn main() {
                         //     Err(e) => eprintln!("Failed to capture image: {:?}", e),
                         // }
                         loop {
-                            sleep(Duration::from_secs(10));
+                            sleep(Duration::from_secs(20));
                             break;
                         }
 
