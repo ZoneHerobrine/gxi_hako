@@ -38,8 +38,8 @@
 - [x] 504   13 0001E670 GXGetImage
 - [x] 404   14 0001C730 GXGetInt
 - [x] 403   15 0001C590 GXGetIntRange
-- [] 204   16 0001BC40 GXGetLastError
-- [] 709   17 0001F370 GXGetOptimalPacketSize
+- [x] 204   16 0001BC40 GXGetLastError
+- [] 709   17 0001F370 GXGetOptimalPacketSize  (Windows Only)
 - [x] 416   18 0001DAA0 GXGetString
 - [x] 415   19 0001D820 GXGetStringLength
 - [x] 425   1A 0001D970 GXGetStringMaxLength
@@ -60,7 +60,7 @@
 - [x] 600   29 0001E730 GXRegisterDeviceOfflineCallback
 - [x] 603   2A 0001E820 GXRegisterFeatureCallback
 - [x] 421   2B 0001E480 GXSendCommand
-- [] 507   2C 0001F100 GXSetAcqusitionBufferNumber
+- [x] 507   2C 0001F100 GXSetAcqusitionBufferNumber
 - [x] 413   2D 0001D720 GXSetBool
 - [x] 420   2E 0001E350 GXSetBuffer
 - [] 424   2F 0001C160 GXSetDevicePersistentIpAddress
@@ -74,4 +74,4 @@
 - [x] 206   37 0001BD70 GXUpdateAllDeviceList
 - [x] 200   38 0001BD00 GXUpdateDeviceList
 - [] 703   39 0001EC40 GXWriteRemoteDevicePort
-- [] 711   3A 0001F450 GXWriteRemoteDevicePortStacked
+- [] 711   3A 0001F450 GXWriteRemoteDevicePortStacked (Windows Only)

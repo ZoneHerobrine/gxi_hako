@@ -294,7 +294,17 @@ pub trait GXInterface {
         device: GX_DEV_HANDLE,
         event_num: *mut u32,
     ) -> Result<i32, libloading::Error>;
-
+    unsafe fn gx_get_last_error(
+        &self,
+        error_code: *mut GX_STATUS_LIST, // !!!这里文档里面没有_List，暂未检验可行性
+        err_text: *mut c_char,
+        size: *mut usize,
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_set_acquisition_buffer_number(
+        &self,
+        device: GX_DEV_HANDLE,
+        buffer_num: u64,
+    ) -> Result<i32, libloading::Error>;
 
     // Callback
     unsafe fn gx_register_capture_callback(
@@ -1356,8 +1366,62 @@ impl GXInterface for GXInstance {
         Ok(result)
     }
     
+
+    /// Get the most recent error description.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_get_last_error(
+        &self,
+        error_code: *mut GX_STATUS_LIST,
+        err_text: *mut c_char,
+        size: *mut usize,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_last_error: Symbol<
+            unsafe extern "C" fn(
+                error_code: *mut GX_STATUS_LIST,
+                err_text: *mut c_char,
+                size: *mut usize,
+            ) -> i32,
+        > = self.lib.get(b"GXGetLastError")?;
+    
+        let result = gx_get_last_error(error_code, err_text, size);
+        if !err_text.is_null() && !size.is_null() {
+            println!("Error text: {}", CStr::from_ptr(err_text).to_string_lossy());
+        }
+        Ok(result)
+    }
     
 
+    /// Set the number of acquisition buffers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_set_acquisition_buffer_number(
+        &self,
+        device: GX_DEV_HANDLE,
+        buffer_num: u64,
+    ) -> Result<i32, libloading::Error> {
+        let gx_set_acquisition_buffer_number: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                buffer_num: u64,
+            ) -> i32,
+        > = self.lib.get(b"GXSetAcqusitionBufferNumber")?;
+    
+        let result = gx_set_acquisition_buffer_number(device, buffer_num);
+        println!("Set acquisition buffer number to: {}", buffer_num);
+        Ok(result)
+    }
+    
+
+    
     /// Register capture callback
     ///
     /// # Examples
