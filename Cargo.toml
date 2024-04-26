@@ -15,4 +15,4 @@ license = "MIT"
 
 [dependencies]
 libloading = "0.8.3"
-opencv = "0.91.1"
+# opencv = "0.91.1"
