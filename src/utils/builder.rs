@@ -1,3 +1,5 @@
+use std::ffi::c_char;
+
 use crate::gx::
 {
     gx_enum::*,
@@ -5,7 +7,6 @@ use crate::gx::
     gx_struct::*,
 };
 
-// Builder 结构体
 pub struct GXDeviceBaseInfoBuilder {
     szVendorName: [u8; GX_INFO_LENGTH_32_BYTE],
     szModelName: [u8; GX_INFO_LENGTH_32_BYTE],
@@ -13,10 +14,11 @@ pub struct GXDeviceBaseInfoBuilder {
     szDisplayName: [u8; GX_INFO_LENGTH_128_BYTE],
     szDeviceID: [u8; GX_INFO_LENGTH_64_BYTE],
     szUserID: [u8; GX_INFO_LENGTH_64_BYTE],
-    accessStatus: GX_ACCESS_STATUS_CMD,
+    accessStatus: GX_ACCESS_STATUS,
     deviceClass: GX_DEVICE_CLASS,
     reserved: [u8; 300],
 }
+
 
 impl GXDeviceBaseInfoBuilder {
     pub fn new() -> Self {
@@ -27,8 +29,8 @@ impl GXDeviceBaseInfoBuilder {
             szDisplayName: [0; GX_INFO_LENGTH_128_BYTE],
             szDeviceID: [0; GX_INFO_LENGTH_64_BYTE],
             szUserID: [0; GX_INFO_LENGTH_64_BYTE],
-            accessStatus: GX_ACCESS_STATUS_CMD::Unknown,
-            deviceClass: GX_DEVICE_CLASS::Unknown,
+            accessStatus: GX_ACCESS_STATUS::GX_ACCESS_STATUS_UNKNOWN,
+            deviceClass: GX_DEVICE_CLASS::GX_DEVICE_CLASS_UNKNOWN,
             reserved: [0; 300],
         }
     }
@@ -63,7 +65,7 @@ impl GXDeviceBaseInfoBuilder {
         self
     }
 
-    pub fn access_status(mut self, value: GX_ACCESS_STATUS_CMD) -> Self {
+    pub fn access_status(mut self, value: GX_ACCESS_STATUS) -> Self {
         self.accessStatus = value;
         self
     }
@@ -90,6 +92,46 @@ impl GXDeviceBaseInfoBuilder {
             accessStatus: self.accessStatus,
             deviceClass: self.deviceClass,
             reserved: self.reserved,
+        }
+    }
+}
+
+
+pub struct GXOpenParamBuilder {
+    pub pszContent: *const c_char,
+    pub openMode: GX_OPEN_MODE,
+    pub accessMode: GX_ACCESS_MODE,
+}
+
+impl GXOpenParamBuilder {
+    pub fn new() -> Self {
+        Self {
+            pszContent: std::ptr::null(),
+            openMode: GX_OPEN_MODE::GX_OPEN_SN,
+            accessMode: GX_ACCESS_MODE::GX_ACCESS_CONTROL,
+        }
+    }
+
+    pub fn psz_content(mut self, value: *const c_char) -> Self {
+        self.pszContent = value;
+        self
+    }
+
+    pub fn open_mode(mut self, value: GX_OPEN_MODE) -> Self {
+        self.openMode = value;
+        self
+    }
+
+    pub fn access_mode(mut self, value: GX_ACCESS_MODE) -> Self {
+        self.accessMode = value;
+        self
+    }
+
+    pub fn build(self) -> GX_OPEN_PARAM {
+        GX_OPEN_PARAM {
+            pszContent: self.pszContent,
+            openMode: self.openMode,
+            accessMode: self.accessMode,
         }
     }
 }

@@ -63,22 +63,22 @@ pub enum GX_FRAME_STATUS {
 //  Device Type Definition
 //------------------------------------------------------------------------------
 // 历史原因保留下面的写法
-// #[repr(C)]
-// #[derive(Debug, Clone, Copy)]
-// pub enum GX_DEVICE_CLASS {
-//     GX_DEVICE_CLASS_UNKNOWN = 0,           // Unknown device type
-//     GX_DEVICE_CLASS_USB2 = 1,              // USB2.0 Vision device
-//     GX_DEVICE_CLASS_GEV = 2,               // Gige Vision device
-//     GX_DEVICE_CLASS_U3V = 3,               // USB3 Vision device
-// }
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub enum GX_DEVICE_CLASS {
-    Unknown = 0,
-    Usb2 = 1,
-    Gev = 2,
-    U3v = 3,
+    GX_DEVICE_CLASS_UNKNOWN = 0,           // Unknown device type
+    GX_DEVICE_CLASS_USB2 = 1,              // USB2.0 Vision device
+    GX_DEVICE_CLASS_GEV = 2,               // Gige Vision device
+    GX_DEVICE_CLASS_U3V = 3,               // USB3 Vision device
 }
+// #[repr(C)]
+// #[derive(Debug, Clone, Copy)]
+// pub enum GX_DEVICE_CLASS {
+//     Unknown = 0,
+//     Usb2 = 1,
+//     Gev = 2,
+//     U3v = 3,
+// }
 
 //------------------------------------------------------------------------------
 //  Feature Type Definition
@@ -137,14 +137,14 @@ pub enum GX_ACCESS_MODE
 }
 
 // 历史原因保留
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
-pub enum GX_ACCESS_STATUS_CMD {
-    Unknown = 0,
-    ReadWrite = 1,
-    ReadOnly = 2,
-    NoAccess = 3,
-}
+// #[repr(C)]
+// #[derive(Debug, Clone, Copy)]
+// pub enum GX_ACCESS_STATUS_CMD {
+//     Unknown = 0,
+//     ReadWrite = 1,
+//     ReadOnly = 2,
+//     NoAccess = 3,
+// }
 
 
 // 自己写的

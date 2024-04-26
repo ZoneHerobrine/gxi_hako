@@ -16,6 +16,7 @@ pub mod gx {
 pub mod utils {
     pub mod builder;
     pub mod cv_gui;
+    pub mod image_process;
     pub mod debug;
     pub mod facade;
     pub mod status;

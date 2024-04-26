@@ -5,9 +5,9 @@ edition = "2021"
 authors = [
     "Hako Chest <zoneherobrine@gmail.com>"
 ]
-rust-version = "1.77.0"
+rust-version = "1.77.2"
 description = "A rust camera interface based on Daheng's GxIAPI"
-keywords = ["gx", "mer", "daheng", "industrycamera"]
+keywords = ["gx", "mer", "daheng", "industry camera"]
 categories = ["hardware-support"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

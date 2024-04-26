@@ -16,7 +16,7 @@ pub struct GX_DEVICE_BASE_INFO {
     pub szDisplayName: [u8; GX_INFO_LENGTH_128_BYTE],
     pub szDeviceID: [u8; GX_INFO_LENGTH_64_BYTE],
     pub szUserID: [u8; GX_INFO_LENGTH_64_BYTE],
-    pub accessStatus: GX_ACCESS_STATUS_CMD,
+    pub accessStatus: GX_ACCESS_STATUS,
     pub deviceClass: GX_DEVICE_CLASS,
     pub reserved: [u8; 300],
 }
