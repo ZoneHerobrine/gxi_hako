@@ -21,6 +21,7 @@ use gxi_hako::{
     utils::{
         debug::print_device_info,
         builder::GXDeviceBaseInfoBuilder,
+        facade::*,
     },
 };
 
@@ -110,62 +111,68 @@ fn main() {
                         first_device_sn.trim_end_matches(char::from(0))
                     );
 
-                    let reg_result = gx.gx_register_capture_callback(device_handle, frame_callback);
-                    match reg_result {
-                        Ok(_) => println!("Capture callback registered successfully."),
-                        Err(e) => eprintln!("Failed to register capture callback: {:?}", e),
-                    }
+                    // let reg_result = gx.gx_register_capture_callback(device_handle, frame_callback);
+                    // match reg_result {
+                    //     Ok(_) => println!("Capture callback registered successfully."),
+                    //     Err(e) => eprintln!("Failed to register capture callback: {:?}", e),
+                    // }
 
                     gx.gx_send_command(device_handle, GX_FEATURE_ID::GX_COMMAND_ACQUISITION_START)
                         .expect("Failed to send command");
 
-                    // Getting an image
-                    // 在这里写获取图像的代码
+                    // 这种写法在所有权机制下是错误的，因为image_buffer在返回的时候就已经被释放了
+                    // let frame_data_facade = fetch_frame_data(&gx, device_handle);
+                    // let mut frame_data = convert_to_frame_data(&frame_data_facade.unwrap());
+                    
+                    // 这种写法是正确的，因为image_buffer被返回到了当前作用域
+                    let (frame_data_facade, image_buffer) = fetch_frame_data(&gx, device_handle).unwrap();
+                    let mut frame_data = convert_to_frame_data(&frame_data_facade);
 
-                    // 这里有待通过get来自动配置√
+                    // or you can use the following code to initialize the GX_FRAME_DATA struct without using the facade
+                    // the following config is about Mono8, 2048x1536 camera
 
-                    let pixel_size = 1; // BayerRg8、Mono8 格式下每像素1字节
-                    let image_size = 2048 * 1536 * pixel_size; // 图像宽*高*每像素字节数
-                    let mut image_buffer = vec![1u8; image_size]; // 分配图像缓冲区
-                    let mut frame_data = GX_FRAME_DATA {
-                        nStatus: 0,
-                        pImgBuf: image_buffer.as_mut_ptr() as *mut c_void, // 设置图像数据指针
-                        nWidth: 2048,
-                        nHeight: 1536,
-                        // nPixelFormat: PixelFormatEntry::Mono8 as i32,
-                        nPixelFormat: 17301505,
-                        nImgSize: image_size as i32,
-                        nFrameID: 0,
-                        nTimestamp: 0,
-                        reserved: [17301505],
-                    };
+                    // let pixel_size = 1; // BayerRg8、Mono8 格式下每像素1字节
+                    // let image_size = 2048 * 1536 * pixel_size; // 图像宽*高*每像素字节数
+                    // let mut image_buffer = vec![1u8; image_size]; // 分配图像缓冲区
+                    // let mut frame_data = GX_FRAME_DATA {
+                    //     nStatus: 0,
+                    //     pImgBuf: image_buffer.as_mut_ptr() as *mut c_void, // 设置图像数据指针
+                    //     nWidth: 2048,
+                    //     nHeight: 1536,
+                    //     // nPixelFormat: PixelFormatEntry::Mono8 as i32,
+                    //     nPixelFormat: 17301505,
+                    //     nImgSize: image_size as i32,
+                    //     nFrameID: 0,
+                    //     nTimestamp: 0,
+                    //     reserved: [17301505],
+                    // };
 
-                        // let result = gx.gx_get_image(device_handle, &mut frame_data, 100);
-                        // match result {
-                        //     Ok(_) => {
-                        //         println!("Image captured successfully.");
-                        //         if frame_data.nStatus == 0 {
-                        //             let data = slice::from_raw_parts(frame_data.pImgBuf as *const u8, (frame_data.nWidth * frame_data.nHeight) as usize);
+                        let result = gx.gx_get_image(device_handle, &mut frame_data, 100);
+                        match result {
+                            Ok(_) => {
+                                println!("Image captured successfully.");
+                                if frame_data.nStatus == 0 {
+                                    let data = slice::from_raw_parts(frame_data.pImgBuf as *const u8, (frame_data.nWidth * frame_data.nHeight) as usize);
                                     
-                        //             // 使用正确的函数签名创建Mat对象
-                        //             let mat = core::Mat::new_rows_cols_with_data(
-                        //                 frame_data.nHeight, 
-                        //                 frame_data.nWidth, 
-                        //                 // core::CV_8UC1, 
-                        //                 data
-                        //             ).unwrap();
+                                    // 使用正确的函数签名创建Mat对象
+                                    let mat = core::Mat::new_rows_cols_with_data(
+                                        frame_data.nHeight, 
+                                        frame_data.nWidth, 
+                                        // core::CV_8UC1, 
+                                        data
+                                    ).unwrap();
                         
-                        //             highgui::imshow("Camera Frame", &mat).unwrap();
-                        //             if highgui::wait_key(10).unwrap() > 0 {
-                        //                 highgui::destroy_window("Camera Frame").unwrap();
-                        //             }
+                                    highgui::imshow("Camera Frame", &mat).unwrap();
+                                    if highgui::wait_key(10).unwrap() > 0 {
+                                        highgui::destroy_window("Camera Frame").unwrap();
+                                    }
 
-                        //             highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
-                        //             sleep(Duration::from_secs(10));
-                        //         }
-                        //     }
-                        //     Err(e) => eprintln!("Failed to capture image: {:?}", e),
-                        // }
+                                    highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
+                                    sleep(Duration::from_secs(10));
+                                }
+                            }
+                            Err(e) => eprintln!("Failed to capture image: {:?}", e),
+                        }
 
                         
                         highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
@@ -181,11 +188,11 @@ fn main() {
 
                     
 
-                    let unregeister_result = gx.gx_unregister_capture_callback(device_handle);
-                    match unregeister_result {
-                        Ok(_) => println!("Capture callback unregistered successfully."),
-                        Err(e) => eprintln!("Failed to unregister capture callback: {:?}", e),
-                    }
+                    // let unregeister_result = gx.gx_unregister_capture_callback(device_handle);
+                    // match unregeister_result {
+                    //     Ok(_) => println!("Capture callback unregistered successfully."),
+                    //     Err(e) => eprintln!("Failed to unregister capture callback: {:?}", e),
+                    // }
 
                     // Close the device
                     gx.gx_close_device(device_handle)
