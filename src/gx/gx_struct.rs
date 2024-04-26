@@ -1,9 +1,11 @@
+#![allow(dead_code)]
+
+
 use super::gx_const::*;
 use super::gx_enum::*;
 use std::ffi::c_int;
 use std::ffi::{c_char,c_void};
 
-// 请你放照下面的格式，把上述C开发文档的内容写为rust版本，谢谢！
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct GX_DEVICE_BASE_INFO {

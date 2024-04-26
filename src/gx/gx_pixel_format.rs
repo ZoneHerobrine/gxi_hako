@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 // Use simple enums to represent the size and color filter entries.
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]

@@ -1,11 +1,11 @@
 //! Rust packed GxAPI interface
+#![allow(dead_code)]
 
 use libloading::{Library, Symbol};
-use std::ffi::{CStr, c_char, c_void};
+use std::ffi::c_void;
 
 use crate::gx::gx_handle::*;
 use crate::gx::gx_struct::*;
-use crate::gx::gx_const::*;
 use crate::gx::gx_enum::*;
 
 pub type GXCaptureCallBack = extern "C" fn(pFrameData: *mut GX_FRAME_CALLBACK_PARAM);
@@ -227,6 +227,21 @@ impl GXInterface {
         let gx_get_int: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, int_value: *mut i64) -> i32> = self.lib.get(b"GXGetInt")?;
         println!("int_value: {:?}", int_value);
         Ok(gx_get_int(device, feature_id, int_value))
+    }
+
+    /// Get float value from device
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// 
+    /// use crate::gx::gx_interface::GXInterface;
+    /// 
+    /// ```
+    pub unsafe fn gx_get_float(&self, device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, float_value: *mut f64) -> Result<i32, libloading::Error> {
+        let gx_get_float: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, float_value: *mut f64) -> i32> = self.lib.get(b"GXGetFloat")?;
+        println!("int_value: {:?}", float_value);
+        Ok(gx_get_float(device, feature_id, float_value))
     }
 
     /// Get enum value from device
