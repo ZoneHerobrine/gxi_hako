@@ -41,8 +41,8 @@ pub struct GX_DEVICE_IP_INFO {
 #[derive(Debug, Clone)]
 pub struct GX_OPEN_PARAM {
     pub pszContent: *const c_char,
-    pub openMode: GX_OPEN_MODE_CMD,
-    pub accessMode: GX_ACCESS_MODE_CMD,
+    pub openMode: GX_OPEN_MODE,
+    pub accessMode: GX_ACCESS_MODE,
 }
 
 #[repr(C)]

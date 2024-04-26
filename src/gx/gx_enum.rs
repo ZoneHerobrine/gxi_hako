@@ -135,6 +135,7 @@ pub enum GX_ACCESS_MODE
     GX_ACCESS_CONTROL                   = 3,           //< Open the device in controlled mode
     GX_ACCESS_EXCLUSIVE                 = 4,           //< Open the device in exclusive mode
 }
+
 // 历史原因保留
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
@@ -413,7 +414,7 @@ pub enum GX_OPEN_MODE {
     GX_OPEN_USERID = 4,
 }
 
-pub type GX_OPEN_MODE_CMD = i32;
+// pub type GX_OPEN_MODE_CMD = i32;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]

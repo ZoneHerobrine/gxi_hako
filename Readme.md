@@ -18,10 +18,10 @@
 # DLL里面的实现了的与暂未实现的全部接口
 - [x] 302    0 0001C020 GXCloseDevice
 - [x] 101    1 0001BBC0 GXCloseLib
-- [] 700    2 0001E9E0 GXExportConfigFile
-- [] 707    3 0001EA50 GXExportConfigFileW
-- [] 602    4 0001E920 GXFlushEvent
-- [] 505    5 0001E6E0 GXFlushQueue
+- [x] 700    2 0001E9E0 GXExportConfigFile
+- [] 707    3 0001EA50 GXExportConfigFileW  ?在开发文档里面没介绍这个函数
+- [x] 602    4 0001E920 GXFlushEvent
+- [x] 505    5 0001E6E0 GXFlushQueue
 - [x] 201    6 0001BDE0 GXGetAllDeviceBaseInfo
 - [x] 414    7 0001D5F0 GXGetBool
 - [x] 419    8 0001E080 GXGetBuffer
@@ -29,10 +29,10 @@
 - [] 205    A 0001BE80 GXGetDeviceIPInfo
 - [] 423    B 0001C0B0 GXGetDevicePersistentIpAddress
 - [x] 411    C 0001D3C0 GXGetEnum
-- [] 410    D 0001CF50 GXGetEnumDescription
-- [] 409    E 0001CE20 GXGetEnumEntryNums
-- [] 506    F 0001E970 GXGetEventNumInQueue
-- [] 422   10 0001C1E0 GXGetFeatureName
+- [x] 410    D 0001CF50 GXGetEnumDescription
+- [x] 409    E 0001CE20 GXGetEnumEntryNums
+- [x] 506    F 0001E970 GXGetEventNumInQueue
+- [x] 422   10 0001C1E0 GXGetFeatureName
 - [x] 408   11 0001CCF0 GXGetFloat
 - [x] 406   12 0001C960 GXGetFloatRange
 - [x] 504   13 0001E670 GXGetImage
@@ -46,19 +46,19 @@
 - [] 705   1B 0001EEF0 GXGigEForceIp
 - [] 704   1C 0001ECC0 GXGigEIpConfiguration
 - [] 706   1D 0001F170 GXGigEResetDevice
-- [] 701   1E 0001EAC0 GXImportConfigFile
-- [] 708   1F 0001EB40 GXImportConfigFileW
+- [x] 701   1E 0001EAC0 GXImportConfigFile
+- [] 708   1F 0001EB40 GXImportConfigFileW  ?在开发文档里面没介绍这个函数
 - [x] 100   20 0001BB70 GXInitLib
-- [] 400   21 0001C260 GXIsImplemented
-- [] 401   22 0001C370 GXIsReadable
-- [] 402   23 0001C480 GXIsWritable
-- [] 301   24 0001BFB0 GXOpenDevice
+- [x] 400   21 0001C260 GXIsImplemented
+- [x] 401   22 0001C370 GXIsReadable
+- [x] 402   23 0001C480 GXIsWritable
+- [x] 301   24 0001BFB0 GXOpenDevice
 - [x] 300   25 0001BF10 GXOpenDeviceByIndex
 - [] 702   26 0001EBC0 GXReadRemoteDevicePort
 - [] 710   27 0001F3E0 GXReadRemoteDevicePortStacked
 - [x] 500   28 0001E5B0 GXRegisterCaptureCallback
-- [] 600   29 0001E730 GXRegisterDeviceOfflineCallback
-- [] 603   2A 0001E820 GXRegisterFeatureCallback
+- [x] 600   29 0001E730 GXRegisterDeviceOfflineCallback
+- [x] 603   2A 0001E820 GXRegisterFeatureCallback
 - [x] 421   2B 0001E480 GXSendCommand
 - [] 507   2C 0001F100 GXSetAcqusitionBufferNumber
 - [x] 413   2D 0001D720 GXSetBool
@@ -69,9 +69,9 @@
 - [x] 405   32 0001C860 GXSetInt
 - [x] 417   33 0001DDC0 GXSetString
 - [x] 501   34 0001E620 GXUnregisterCaptureCallback
-- [] 601   35 0001E7B0 GXUnregisterDeviceOfflineCallback
-- [] 604   36 0001E8B0 GXUnregisterFeatureCallback
-- [] 206   37 0001BD70 GXUpdateAllDeviceList
-- [] 200   38 0001BD00 GXUpdateDeviceList
+- [x] 601   35 0001E7B0 GXUnregisterDeviceOfflineCallback
+- [x] 604   36 0001E8B0 GXUnregisterFeatureCallback
+- [x] 206   37 0001BD70 GXUpdateAllDeviceList
+- [x] 200   38 0001BD00 GXUpdateDeviceList
 - [] 703   39 0001EC40 GXWriteRemoteDevicePort
 - [] 711   3A 0001F450 GXWriteRemoteDevicePortStacked

@@ -2,7 +2,7 @@
 #![allow(dead_code)]
 
 use libloading::{Library, Symbol};
-use std::ffi::{c_void,c_char};
+use std::ffi::{c_void,c_char,CStr};
 
 // use crate::{
 //     gx::{gx_enum::*, gx_handle::*, gx_struct::*},
@@ -10,7 +10,7 @@ use std::ffi::{c_void,c_char};
 // };
 
 use crate::gx::{
-    gx_enum::*, gx_handle::*, gx_struct::*,
+    gx_enum::*, gx_handle::*, gx_struct::*,gx_callback::*
 };
 
 fn convert_to_gx_status(status_code: i32) -> GX_STATUS_LIST {
@@ -34,7 +34,6 @@ fn convert_to_gx_status(status_code: i32) -> GX_STATUS_LIST {
     }
 }
 
-pub type GXCaptureCallBack = extern "C" fn(pFrameData: *mut GX_FRAME_CALLBACK_PARAM);
 
 // Define a custom error type
 #[derive(Debug)]
@@ -63,6 +62,11 @@ pub trait GXInterface {
         device_num: *mut u32,
         timeout: u32,
     ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_update_all_device_list(
+        &self,
+        num_devices: *mut u32,
+        timeout: u32,
+    ) -> Result<i32, libloading::Error>;
     unsafe fn gx_get_all_device_base_info(
         &self,
         p_device_info: *mut GX_DEVICE_BASE_INFO,
@@ -73,8 +77,28 @@ pub trait GXInterface {
         index: u32,
         device: *mut GX_DEV_HANDLE,
     ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_open_device(
+        &self,
+        open_param: *const GX_OPEN_PARAM,
+        device_handle: *mut GX_DEV_HANDLE,
+    ) -> Result<i32, libloading::Error>;
+
     unsafe fn gx_close_device(&self, device: GX_DEV_HANDLE) -> Result<i32, libloading::Error>;
     
+    // Config
+
+    unsafe fn gx_export_config_file(
+        &self,
+        device: GX_DEV_HANDLE,
+        file_path: *const c_char,
+    ) -> Result<i32, libloading::Error>;
+
+    unsafe fn gx_import_config_file(
+        &self,
+        device: GX_DEV_HANDLE,
+        file_path: *const c_char,
+    ) -> Result<i32, libloading::Error>;
+
     // Command
     unsafe fn gx_send_command(
         &self,
@@ -89,6 +113,49 @@ pub trait GXInterface {
         p_frame_data: *mut GX_FRAME_DATA,
         timeout: i32,
     ) -> Result<(), CameraError>;
+
+    // Flush
+
+    unsafe fn gx_flush_queue(
+        &self,
+        device: GX_DEV_HANDLE,
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_flush_event(
+        &self,
+        device: GX_DEV_HANDLE,
+    ) -> Result<i32, libloading::Error>;
+
+    // Feature Status
+
+    unsafe fn gx_get_feature_name(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        name: *mut c_char,
+        size: *mut usize, // Using usize to represent size_t
+    ) -> Result<i32, libloading::Error>;
+
+    unsafe fn gx_is_implemented(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        is_implemented: *mut bool,
+    ) -> Result<i32, libloading::Error>;
+
+    unsafe fn gx_is_readable(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        is_readable: *mut bool,
+    ) -> Result<i32, libloading::Error>;
+
+    unsafe fn gx_is_writable(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        is_writable: *mut bool,
+    ) -> Result<i32, libloading::Error>;
+
 
     // Getter and Setter
     unsafe fn gx_get_int(
@@ -118,6 +185,20 @@ pub trait GXInterface {
         float_value: f64,
     ) -> Result<i32, libloading::Error>;
 
+
+    unsafe fn gx_get_enum_entry_nums(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        entry_nums: *mut u32,
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_get_enum_description(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        enum_description: *mut GX_ENUM_DESCRIPTION,
+        buffer_size: *mut usize,
+    ) -> Result<i32, libloading::Error>;
     unsafe fn gx_get_enum(
         &self,
         device: GX_DEV_HANDLE,
@@ -208,6 +289,12 @@ pub trait GXInterface {
         float_range: *mut GX_FLOAT_RANGE, // Assume GX_FLOAT_RANGE is defined somewhere
     ) -> Result<i32, libloading::Error>;
 
+    unsafe fn gx_get_event_num_in_queue(
+        &self,
+        device: GX_DEV_HANDLE,
+        event_num: *mut u32,
+    ) -> Result<i32, libloading::Error>;
+
 
     // Callback
     unsafe fn gx_register_capture_callback(
@@ -217,6 +304,32 @@ pub trait GXInterface {
     ) -> Result<(), CameraError>;
     unsafe fn gx_unregister_capture_callback(&self, device: *mut c_void)
         -> Result<(), CameraError>;
+    unsafe fn gx_register_device_offline_callback(
+        &self,
+        device: GX_DEV_HANDLE,
+        user_param: *mut std::os::raw::c_void,
+        callback_fun: GXDeviceOfflineCallBack,
+        callback_handle: *mut GX_EVENT_CALLBACK_HANDLE,
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_unregister_device_offline_callback(
+        &self,
+        device: GX_DEV_HANDLE,
+        callback_handle: GX_EVENT_CALLBACK_HANDLE,
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_register_feature_callback(
+        &self,
+        device: GX_DEV_HANDLE,
+        user_param: *mut std::os::raw::c_void,
+        callback_fun: GXFeatureCallBack,
+        feature_id: GX_FEATURE_ID,
+        callback_handle: *mut GX_FEATURE_CALLBACK_HANDLE,
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_unregister_feature_callback(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        callback_handle: GX_FEATURE_CALLBACK_HANDLE,
+    ) -> Result<i32, libloading::Error>;
 }
 
 pub struct GXInstance {
@@ -333,6 +446,32 @@ impl GXInterface for GXInstance {
         Ok(gx_update_device_list(device_num, timeout))
     }
 
+    /// Enumerate all available devices on the network and retrieve the number of devices
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_update_all_device_list(
+        &self,
+        num_devices: *mut u32,
+        timeout: u32,
+    ) -> Result<i32, libloading::Error> {
+        let gx_update_all_device_list: Symbol<
+            unsafe extern "C" fn(
+                num_devices: *mut u32,
+                timeout: u32,
+            ) -> i32,
+        > = self.lib.get(b"GXUpdateAllDeviceList")?;
+    
+        // 调用 C 函数全网枚举当前可用的所有设备
+        let result = gx_update_all_device_list(num_devices, timeout);
+        println!("num_devices: {:?}, timeout: {:?}", num_devices, timeout);
+        Ok(result)
+    }
+    
+
     /// Get all device base info
     ///
     /// # Examples
@@ -382,6 +521,100 @@ impl GXInterface for GXInstance {
         > = self.lib.get(b"GXOpenDeviceByIndex")?;
         Ok(gx_open_device_by_index(index, device))
     }
+
+    
+    /// Open a device by a unique identifier such as SN, IP, MAC, or Index
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_open_device(
+        &self,
+        open_param: *const GX_OPEN_PARAM,
+        device_handle: *mut GX_DEV_HANDLE,
+    ) -> Result<i32, libloading::Error> {
+        let gx_open_device: Symbol<
+            unsafe extern "C" fn(
+                open_param: *const GX_OPEN_PARAM,
+                device_handle: *mut GX_DEV_HANDLE,
+            ) -> i32,
+        > = self.lib.get(b"GXOpenDevice")?;
+    
+        // 调用 C 函数打开设备
+        let result = gx_open_device(open_param, device_handle);
+        println!("device_handle: {:?}", device_handle);
+        Ok(result)
+    }
+    
+
+    /// Close device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// use crate::gx::gx_interface::GXInterface;
+    ///
+    /// ```
+    unsafe fn gx_close_device(&self, device: GX_DEV_HANDLE) -> Result<i32, libloading::Error> {
+        let gx_close_device: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE) -> i32> =
+            self.lib.get(b"GXCloseDevice")?;
+        Ok(gx_close_device(device))
+    }
+
+    /// Export the current parameters of the camera to a configuration file
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_export_config_file(
+        &self,
+        device: GX_DEV_HANDLE,
+        file_path: *const c_char,
+    ) -> Result<i32, libloading::Error> {
+        let gx_export_config_file: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                file_path: *const c_char,
+            ) -> i32,
+        > = self.lib.get(b"GXExportConfigFile")?;
+    
+        // 调用 C 函数导出配置文件
+        let result = gx_export_config_file(device, file_path);
+        println!("Exported config file to: {:?}", CStr::from_ptr(file_path));
+        Ok(result)
+    }
+
+    /// Import a configuration file to the camera
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_import_config_file(
+        &self,
+        device: GX_DEV_HANDLE,
+        file_path: *const c_char,
+    ) -> Result<i32, libloading::Error> {
+        let gx_import_config_file: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                file_path: *const c_char,
+            ) -> i32,
+        > = self.lib.get(b"GXImportConfigFile")?;
+    
+        // 调用 C 函数导入配置文件
+        let result = gx_import_config_file(device, file_path);
+        println!("Imported config file from: {:?}", CStr::from_ptr(file_path));
+        Ok(result)
+    }
+    
+    
 
     /// Send command to device
     ///
@@ -446,20 +679,161 @@ impl GXInterface for GXInstance {
         }
     }
 
-    /// Close device
+    /// Clear the cache images in the image output queue
     ///
     /// # Examples
     ///
     /// ```
-    ///
     /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_flush_queue(
+        &self,
+        device: GX_DEV_HANDLE,
+    ) -> Result<i32, libloading::Error> {
+        let gx_flush_queue: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+            ) -> i32,
+        > = self.lib.get(b"GXFlushQueue")?;
+    
+        // 调用 C 函数清空图像输出队列
+        let result = gx_flush_queue(device);
+        println!("Flushed image queue for device: {:?}", device);
+        Ok(result)
+    }
+
+    /// Clear the device event queue, such as the end of frame exposure event data queue
+    ///
+    /// # Examples
     ///
     /// ```
-    unsafe fn gx_close_device(&self, device: GX_DEV_HANDLE) -> Result<i32, libloading::Error> {
-        let gx_close_device: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE) -> i32> =
-            self.lib.get(b"GXCloseDevice")?;
-        Ok(gx_close_device(device))
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_flush_event(
+        &self,
+        device: GX_DEV_HANDLE,
+    ) -> Result<i32, libloading::Error> {
+        let gx_flush_event: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+            ) -> i32,
+        > = self.lib.get(b"GXFlushEvent")?;
+    
+        // 调用 C 函数清空设备事件队列
+        let result = gx_flush_event(device);
+        println!("Flushed event queue for device: {:?}", device);
+        Ok(result)
     }
+    
+
+
+
+    /// Get the string description corresponding to the feature ID
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_get_feature_name(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        name: *mut c_char,
+        size: *mut usize,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_feature_name: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                name: *mut c_char,
+                size: *mut usize,
+            ) -> i32,
+        > = self.lib.get(b"GXGetFeatureName")?;
+    
+        // 调用 C 函数获取功能码对应的字符串描述
+        let result = gx_get_feature_name(device, feature_id, name, size);
+        println!("name: {:?}, size: {:?}", name, size);
+        Ok(result)
+    }
+    
+    /// Check if a feature is implemented by the camera
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_is_implemented(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        is_implemented: *mut bool,
+    ) -> Result<i32, libloading::Error> {
+        let gx_is_implemented: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                is_implemented: *mut bool,
+            ) -> i32,
+        > = self.lib.get(b"GXIsImplemented")?;
+        // 查询是否支持某功能
+        println!("is_implemented: {:?}", is_implemented);
+        Ok(gx_is_implemented(device, feature_id, is_implemented))
+    }
+    
+
+    /// Check if a feature is readable by the camera
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_is_readable(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        is_readable: *mut bool,
+    ) -> Result<i32, libloading::Error> {
+        let gx_is_readable: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                is_readable: *mut bool,
+            ) -> i32,
+        > = self.lib.get(b"GXIsReadable")?;
+        // 查询功能码是否可读
+        println!("is_readable: {:?}", is_readable);
+        Ok(gx_is_readable(device, feature_id, is_readable))
+    }
+
+    
+    /// Check if a feature is writable by the camera
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_is_writable(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        is_writable: *mut bool,
+    ) -> Result<i32, libloading::Error> {
+        let gx_is_writable: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                is_writable: *mut bool,
+            ) -> i32,
+        > = self.lib.get(b"GXIsWritable")?;
+        // 查询功能码是否可写
+        println!("is_writable: {:?}", is_writable);
+        Ok(gx_is_writable(device, feature_id, is_writable))
+    }
+    
 
     /// Get int value from device
     ///
@@ -486,6 +860,7 @@ impl GXInterface for GXInstance {
         println!("int_value: {:?}", int_value);
         Ok(gx_get_int(device, feature_id, int_value))
     }
+
 
     /// Set int value for device
     ///
@@ -565,6 +940,63 @@ impl GXInterface for GXInstance {
         println!("int_value: {:?}", float_value);
         Ok(gx_set_float(device, feature_id, float_value))
     }
+
+    /// Get the number of selectable options for an enumeration type value
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_get_enum_entry_nums(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        entry_nums: *mut u32,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_enum_entry_nums: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                entry_nums: *mut u32,
+            ) -> i32,
+        > = self.lib.get(b"GXGetEnumEntryNums")?;
+    
+        // 调用 C 函数获取枚举项的可选项个数
+        let result = gx_get_enum_entry_nums(device, feature_id, entry_nums);
+        println!("Number of enum entries for feature ID {:?}: {:?}", feature_id, entry_nums);
+        Ok(result)
+    }
+    
+    /// Get the description of enumeration type values: the number of enum items and each item's value and string description
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_get_enum_description(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        enum_description: *mut GX_ENUM_DESCRIPTION,
+        buffer_size: *mut usize,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_enum_description: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                enum_description: *mut GX_ENUM_DESCRIPTION,
+                buffer_size: *mut usize,
+            ) -> i32,
+        > = self.lib.get(b"GXGetEnumDescription")?;
+    
+        // 调用 C 函数获取枚举类型值的描述信息
+        let result = gx_get_enum_description(device, feature_id, enum_description, buffer_size);
+        println!("Buffer size for enum description: {:?}", buffer_size);
+        Ok(result)
+    }
+    
 
     /// Get enum value from device
     ///
@@ -897,6 +1329,33 @@ impl GXInterface for GXInstance {
         println!("float_range: {:?}", float_range);
         Ok(gx_get_float_range(device, feature_id, float_range))
     }
+
+
+    /// Get the number of events in the remote device event queue
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_get_event_num_in_queue(
+        &self,
+        device: GX_DEV_HANDLE,
+        event_num: *mut u32,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_event_num_in_queue: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                event_num: *mut u32,
+            ) -> i32,
+        > = self.lib.get(b"GXGetEventNumInQueue")?;
+    
+        // 调用 C 函数获取事件队列中的事件数量
+        let result = gx_get_event_num_in_queue(device, event_num);
+        println!("Event number in queue for device: {:?}, count: {:?}", device, event_num);
+        Ok(result)
+    }
+    
     
 
     /// Register capture callback
@@ -957,6 +1416,114 @@ impl GXInterface for GXInstance {
             ))),
         }
     }
+    /// Register a callback function for device offline notification events
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_register_device_offline_callback(
+        &self,
+        device: GX_DEV_HANDLE,
+        user_param: *mut std::os::raw::c_void,
+        callback_fun: GXDeviceOfflineCallBack,
+        callback_handle: *mut GX_EVENT_CALLBACK_HANDLE,
+    ) -> Result<i32, libloading::Error> {
+        let gx_register_device_offline_callback: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                user_param: *mut std::os::raw::c_void,
+                callback_fun: GXDeviceOfflineCallBack,
+                callback_handle: *mut GX_EVENT_CALLBACK_HANDLE,
+            ) -> i32,
+        > = self.lib.get(b"GXRegisterDeviceOfflineCallback")?;
+    
+        let result = gx_register_device_offline_callback(device, user_param, callback_fun, callback_handle);
+        Ok(result)
+    }
+
+    /// Unregister a callback function for device offline notification events
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_unregister_device_offline_callback(
+        &self,
+        device: GX_DEV_HANDLE,
+        callback_handle: GX_EVENT_CALLBACK_HANDLE,
+    ) -> Result<i32, libloading::Error> {
+        let gx_unregister_device_offline_callback: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                callback_handle: GX_EVENT_CALLBACK_HANDLE,
+            ) -> i32,
+        > = self.lib.get(b"GXUnregisterDeviceOfflineCallback")?;
+    
+        let result = gx_unregister_device_offline_callback(device, callback_handle);
+        Ok(result)
+    }
+    
+
+
+    /// Register a callback function for device feature updates
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_register_feature_callback(
+        &self,
+        device: GX_DEV_HANDLE,
+        user_param: *mut std::os::raw::c_void,
+        callback_fun: GXFeatureCallBack,
+        feature_id: GX_FEATURE_ID,
+        callback_handle: *mut GX_FEATURE_CALLBACK_HANDLE,
+    ) -> Result<i32, libloading::Error> {
+        let gx_register_feature_callback: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                user_param: *mut std::os::raw::c_void,
+                callback_fun: GXFeatureCallBack,
+                feature_id: GX_FEATURE_ID,
+                callback_handle: *mut GX_FEATURE_CALLBACK_HANDLE,
+            ) -> i32,
+        > = self.lib.get(b"GXRegisterFeatureCallback")?;
+    
+        let result = gx_register_feature_callback(device, user_param, callback_fun, feature_id, callback_handle);
+        Ok(result)
+    }
+
+    /// Unregister a callback function for device feature updates
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_unregister_feature_callback(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        callback_handle: GX_FEATURE_CALLBACK_HANDLE,
+    ) -> Result<i32, libloading::Error> {
+        let gx_unregister_feature_callback: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                callback_handle: GX_FEATURE_CALLBACK_HANDLE,
+            ) -> i32,
+        > = self.lib.get(b"GXUnregisterFeatureCallback")?;
+    
+        let result = gx_unregister_feature_callback(device, feature_id, callback_handle);
+        Ok(result)
+    }
+    
+
+
 }
 
 // 相关定义如下

@@ -5,6 +5,7 @@
 
 pub mod gx {
     pub mod gx_const;
+    pub mod gx_callback;
     pub mod gx_enum;
     pub mod gx_handle;
     pub mod gx_interface;
