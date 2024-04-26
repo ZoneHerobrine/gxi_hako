@@ -2,7 +2,7 @@
 #![allow(dead_code)]
 
 use libloading::{Library, Symbol};
-use std::ffi::c_void;
+use std::ffi::{c_void,c_char};
 
 // use crate::{
 //     gx::{gx_enum::*, gx_handle::*, gx_struct::*},
@@ -53,7 +53,11 @@ pub trait GXInterface {
     where
         Self: Sized;
 
+    // Lib
     unsafe fn gx_init_lib(&self) -> Result<i32, libloading::Error>;
+    unsafe fn gx_close_lib(&self) -> Result<(), libloading::Error>;
+
+    // Device
     unsafe fn gx_update_device_list(
         &self,
         device_num: *mut u32,
@@ -69,37 +73,143 @@ pub trait GXInterface {
         index: u32,
         device: *mut GX_DEV_HANDLE,
     ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_close_device(&self, device: GX_DEV_HANDLE) -> Result<i32, libloading::Error>;
+    
+    // Command
     unsafe fn gx_send_command(
         &self,
         device: GX_DEV_HANDLE,
         feature_id: GX_FEATURE_ID,
     ) -> Result<(), CameraError>;
+
+    // Image
     unsafe fn gx_get_image(
         &self,
         device: GX_DEV_HANDLE,
         p_frame_data: *mut GX_FRAME_DATA,
         timeout: i32,
     ) -> Result<(), CameraError>;
-    unsafe fn gx_close_device(&self, device: GX_DEV_HANDLE) -> Result<i32, libloading::Error>;
-    unsafe fn gx_close_lib(&self) -> Result<(), libloading::Error>;
+
+    // Getter and Setter
     unsafe fn gx_get_int(
         &self,
         device: GX_DEV_HANDLE,
         feature_id: GX_FEATURE_ID,
         int_value: *mut i64,
     ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_set_int(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        int_value: i64,
+    ) -> Result<i32, libloading::Error>;
+
+
     unsafe fn gx_get_float(
         &self,
         device: GX_DEV_HANDLE,
         feature_id: GX_FEATURE_ID,
         float_value: *mut f64,
     ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_set_float(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        float_value: f64,
+    ) -> Result<i32, libloading::Error>;
+
     unsafe fn gx_get_enum(
         &self,
         device: GX_DEV_HANDLE,
         feature_id: GX_FEATURE_ID,
         enum_value: *mut i64,
     ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_set_enum(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        enum_value: i64,
+    ) -> Result<i32, libloading::Error>;
+
+    unsafe fn gx_get_bool(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        value: *mut bool,
+    ) -> Result<i32, libloading::Error>;
+
+    unsafe fn gx_set_bool(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        value: bool,
+    ) -> Result<i32, libloading::Error>;
+
+    unsafe fn gx_get_string_length(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        size: *mut usize, // 使用 usize 来表示 size_t
+    ) -> Result<i32, libloading::Error>;
+
+    unsafe fn gx_get_string_max_length(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        size: *mut usize, // 使用 usize 来表示 size_t
+    ) -> Result<i32, libloading::Error>;
+
+    unsafe fn gx_get_string(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        content: *mut c_char,
+        size: *mut usize,
+    ) -> Result<i32, libloading::Error>;
+
+    unsafe fn gx_set_string(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        content: *const c_char,
+    ) -> Result<i32, libloading::Error>;
+
+    unsafe fn gx_get_buffer_length(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        size: *mut usize, // Using usize to represent size_t
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_get_buffer(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        buffer: *mut u8,
+        size: *mut usize, // Using usize to represent size_t
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_set_buffer(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        buffer: *const u8,
+        size: usize, // Using usize to represent size_t
+    ) -> Result<i32, libloading::Error>;
+
+    unsafe fn gx_get_int_range(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        int_range: *mut GX_INT_RANGE, // Assume GX_INT_RANGE is defined somewhere
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_get_float_range(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        float_range: *mut GX_FLOAT_RANGE, // Assume GX_FLOAT_RANGE is defined somewhere
+    ) -> Result<i32, libloading::Error>;
+
+
+    // Callback
     unsafe fn gx_register_capture_callback(
         &self,
         device: *mut c_void,
@@ -377,6 +487,33 @@ impl GXInterface for GXInstance {
         Ok(gx_get_int(device, feature_id, int_value))
     }
 
+    /// Set int value for device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// use crate::gx::gx_interface::GXInterface;
+    ///
+    /// ```
+    unsafe fn gx_set_int(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        int_value:  i64,
+    ) -> Result<i32, libloading::Error> {
+        let gx_set_int: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                int_value: i64,
+            ) -> i32,
+        > = self.lib.get(b"GXSetInt")?;
+        println!("int_value: {:?}", int_value);
+        Ok(gx_set_int(device, feature_id, int_value))
+    }
+
+
     /// Get float value from device
     ///
     /// # Examples
@@ -401,6 +538,32 @@ impl GXInterface for GXInstance {
         > = self.lib.get(b"GXGetFloat")?;
         println!("int_value: {:?}", float_value);
         Ok(gx_get_float(device, feature_id, float_value))
+    }
+
+    /// Set float value for device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// use crate::gx::gx_interface::GXInterface;
+    ///
+    /// ```
+    unsafe fn gx_set_float(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        float_value: f64,
+    ) -> Result<i32, libloading::Error> {
+        let gx_set_float: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                float_value: f64,
+            ) -> i32,
+        > = self.lib.get(b"GXSetFloat")?;
+        println!("int_value: {:?}", float_value);
+        Ok(gx_set_float(device, feature_id, float_value))
     }
 
     /// Get enum value from device
@@ -428,6 +591,313 @@ impl GXInterface for GXInstance {
         println!("enum_value: {:?}", enum_value);
         Ok(gx_get_enum(device, feature_id, enum_value))
     }
+
+
+    /// Set enum value for device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// use crate::gx::gx_interface::GXInterface;
+    ///
+    /// ```
+    unsafe fn gx_set_enum(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        enum_value: i64,
+    ) -> Result<i32, libloading::Error> {
+        let gx_set_enum: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                enum_value: i64,
+            ) -> i32,
+        > = self.lib.get(b"GXSetEnum")?;
+        println!("enum_value: {:?}", enum_value);
+        Ok(gx_set_enum(device, feature_id, enum_value))
+    }
+
+
+    /// Get bool value from device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// use crate::gx::gx_interface::GXInterface;
+    ///
+    /// ```
+    unsafe fn gx_get_bool(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        bool_value: *mut bool,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_bool: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                bool_value: *mut bool,
+            ) -> i32,
+        > = self.lib.get(b"GXGetBool")?;
+        println!("bool_value: {:?}", bool_value);
+        Ok(gx_get_bool(device, feature_id, bool_value))
+    }
+
+    /// Set bool value for device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// use crate::gx::gx_interface::GXInterface;
+    ///
+    /// ```
+    unsafe fn gx_set_bool(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        bool_value: bool,
+    ) -> Result<i32, libloading::Error> {
+        let gx_set_bool: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                bool_value: bool,
+            ) -> i32,
+        > = self.lib.get(b"GXSetBool")?;
+        println!("bool_value: {:?}", bool_value);
+        Ok(gx_set_bool(device, feature_id, bool_value))
+    }
+
+
+    /// Get the length of the string value from the device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_get_string_length(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        size: *mut usize, // Using usize to represent size_t
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_string_length: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                size: *mut usize,
+            ) -> i32,
+        > = self.lib.get(b"GXGetStringLength")?;
+        println!("size: {:?}", size);
+        Ok(gx_get_string_length(device, feature_id, size))
+    }
+
+    /// Get the maximum length of the string value from the device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_get_string_max_length(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        size: *mut usize, // Using usize to represent size_t
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_string_max_length: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                size: *mut usize,
+            ) -> i32,
+        > = self.lib.get(b"GXGetStringMaxLength")?;
+        println!("size: {:?}", size);
+        Ok(gx_get_string_max_length(device, feature_id, size))
+    }
+
+    /// Get the string value from the device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_get_string(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        content: *mut c_char,
+        size: *mut usize,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_string: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                content: *mut c_char,
+                size: *mut usize,
+            ) -> i32,
+        > = self.lib.get(b"GXGetString")?;
+        println!("content: {:?}, size: {:?}", content, size);
+        Ok(gx_get_string(device, feature_id, content, size))
+    }   
+
+
+    /// Set the string value for the device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_set_string(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        content: *const c_char,
+    ) -> Result<i32, libloading::Error> {
+        let gx_set_string: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                content: *const c_char,
+            ) -> i32,
+        > = self.lib.get(b"GXSetString")?;
+        println!("content: {:?}", content);
+        Ok(gx_set_string(device, feature_id, content))
+    }
+
+    /// Get the length of the block data from the device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    /// 
+    unsafe fn gx_get_buffer_length(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        size: *mut usize,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_buffer_length: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                size: *mut usize,
+            ) -> i32,
+        > = self.lib.get(b"GXGetBufferLength")?;
+        println!("size: {:?}", size);
+        Ok(gx_get_buffer_length(device, feature_id, size))
+    }
+
+    /// Get the block data from the device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_get_buffer(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        buffer: *mut u8,
+        size: *mut usize,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_buffer: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                buffer: *mut u8,
+                size: *mut usize,
+            ) -> i32,
+        > = self.lib.get(b"GXGetBuffer")?;
+        println!("buffer: {:?}, size: {:?}", buffer, size);
+        Ok(gx_get_buffer(device, feature_id, buffer, size))
+    }
+    
+    /// Set the block data for the device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    /// 
+    unsafe fn gx_set_buffer(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        buffer: *const u8,
+        size: usize,
+    ) -> Result<i32, libloading::Error> {
+        let gx_set_buffer: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                buffer: *const u8,
+                size: usize,
+            ) -> i32,
+        > = self.lib.get(b"GXSetBuffer")?;
+        println!("buffer: {:?}, size: {:?}", buffer, size);
+        Ok(gx_set_buffer(device, feature_id, buffer, size))
+    }
+    
+    /// Get the range of an integer type value from the device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_get_int_range(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        int_range: *mut GX_INT_RANGE,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_int_range: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                int_range: *mut GX_INT_RANGE,
+            ) -> i32,
+        > = self.lib.get(b"GXGetIntRange")?;
+        println!("int_range: {:?}", int_range);
+        Ok(gx_get_int_range(device, feature_id, int_range))
+    }
+    
+    /// Get the range of a float type value from the device
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::gx::gx_interface::GXInterface;
+    /// ```
+    unsafe fn gx_get_float_range(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        float_range: *mut GX_FLOAT_RANGE,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_float_range: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                float_range: *mut GX_FLOAT_RANGE,
+            ) -> i32,
+        > = self.lib.get(b"GXGetFloatRange")?;
+        println!("float_range: {:?}", float_range);
+        Ok(gx_get_float_range(device, feature_id, float_range))
+    }
+    
 
     /// Register capture callback
     ///
