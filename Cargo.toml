@@ -1,7 +1,14 @@
 [package]
-name = "gxi_rust_ori"
+name = "gxi_hako"
 version = "0.1.0"
 edition = "2021"
+authors = [
+    "Hako Chest <zoneherobrine@gmail.com>"
+]
+rust-version = "1.77.0"
+description = "A rust camera interface based on Daheng's GxIAPI"
+keywords = ["gx", "mer", "daheng", "industrycamera"]
+categories = ["hardware-support"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

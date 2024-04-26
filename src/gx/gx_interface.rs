@@ -4,28 +4,14 @@
 use libloading::{Library, Symbol};
 use std::ffi::c_void;
 
-use crate::gx::gx_handle::*;
-use crate::gx::gx_struct::*;
-use crate::gx::gx_enum::*;
+// use crate::{
+//     gx::{gx_enum::*, gx_handle::*, gx_struct::*},
+//     utils::status::convert_to_gx_status,
+// };
 
-pub type GXCaptureCallBack = extern "C" fn(pFrameData: *mut GX_FRAME_CALLBACK_PARAM);
-
-// Define a custom error type
-#[derive(Debug)]
-pub enum CameraError {
-    LibraryError(libloading::Error),
-    OperationError(String),
-}
-
-impl From<libloading::Error> for CameraError {
-    fn from(err: libloading::Error) -> Self {
-        CameraError::LibraryError(err)
-    }
-}
-
-pub struct GXInterface {
-    lib: Library,
-}
+use crate::gx::{
+    gx_enum::*, gx_handle::*, gx_struct::*,
+};
 
 fn convert_to_gx_status(status_code: i32) -> GX_STATUS_LIST {
     match status_code {
@@ -48,258 +34,460 @@ fn convert_to_gx_status(status_code: i32) -> GX_STATUS_LIST {
     }
 }
 
+pub type GXCaptureCallBack = extern "C" fn(pFrameData: *mut GX_FRAME_CALLBACK_PARAM);
 
-impl GXInterface {
+// Define a custom error type
+#[derive(Debug)]
+pub enum CameraError {
+    LibraryError(libloading::Error),
+    OperationError(String),
+}
+
+impl From<libloading::Error> for CameraError {
+    fn from(err: libloading::Error) -> Self {
+        CameraError::LibraryError(err)
+    }
+}
+pub trait GXInterface {
+    unsafe fn new(library_path: &str) -> Result<Self, libloading::Error>
+    where
+        Self: Sized;
+
+    unsafe fn gx_init_lib(&self) -> Result<i32, libloading::Error>;
+    unsafe fn gx_update_device_list(
+        &self,
+        device_num: *mut u32,
+        timeout: u32,
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_get_all_device_base_info(
+        &self,
+        p_device_info: *mut GX_DEVICE_BASE_INFO,
+        p_buffer_size: *mut usize,
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_open_device_by_index(
+        &self,
+        index: u32,
+        device: *mut GX_DEV_HANDLE,
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_send_command(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+    ) -> Result<(), CameraError>;
+    unsafe fn gx_get_image(
+        &self,
+        device: GX_DEV_HANDLE,
+        p_frame_data: *mut GX_FRAME_DATA,
+        timeout: i32,
+    ) -> Result<(), CameraError>;
+    unsafe fn gx_close_device(&self, device: GX_DEV_HANDLE) -> Result<i32, libloading::Error>;
+    unsafe fn gx_close_lib(&self) -> Result<(), libloading::Error>;
+    unsafe fn gx_get_int(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        int_value: *mut i64,
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_get_float(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        float_value: *mut f64,
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_get_enum(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        enum_value: *mut i64,
+    ) -> Result<i32, libloading::Error>;
+    unsafe fn gx_register_capture_callback(
+        &self,
+        device: *mut c_void,
+        callback: GXCaptureCallBack,
+    ) -> Result<(), CameraError>;
+    unsafe fn gx_unregister_capture_callback(&self, device: *mut c_void)
+        -> Result<(), CameraError>;
+}
+
+pub struct GXInstance {
+    pub lib: Library,
+}
+
+impl GXInterface for GXInstance {
     /// Create a new GXInterface instance
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// 
-    /// use crate::gx::gx_interface::GXInterface;
-    /// 
-    /// 
-    /// 
-    /// 
-    /// 
+    /// use gxi_hako::gx::{
+    ///     gx_interface::*
+    /// };
+    ///
+    /// unsafe {
+    ///
+    ///    let gx = GXInstance::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
+    ///
+    ///     // Other Operations
+    ///
+    /// }
     /// ```
-    /// 
-    pub unsafe fn new(library_path: &str) -> Result<Self, libloading::Error> {
+    unsafe fn new(library_path: &str) -> Result<Self, libloading::Error> {
         let lib = Library::new(library_path)?;
-        Ok(GXInterface { lib })
+        Ok(GXInstance { lib })
     }
 
     /// Initialize the library
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// 
-    /// use crate::gx::gx_interface::GXInterface;
-    /// 
+    /// use gxi_hako::gx::{
+    ///     gx_interface::*
+    /// };
+    ///
+    /// unsafe {
+    ///
+    ///    let gx = GXInstance::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
+    ///
+    ///     gx.gx_init_lib().expect("Failed to initialize library");
+    ///
+    ///     // Other Operations
+    ///
+    /// }
     /// ```
-    /// 
-    /// 
-    /// 
-    pub unsafe fn gx_init_lib(&self) -> Result<i32, libloading::Error> {
+    unsafe fn gx_init_lib(&self) -> Result<i32, libloading::Error> {
         let gx_init_lib: Symbol<unsafe extern "C" fn() -> i32> = self.lib.get(b"GXInitLib")?;
         Ok(gx_init_lib())
     }
 
-    /// Update the device list
-    /// 
+    /// Close library
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// 
-    /// use crate::gx::gx_interface::GXInterface;
-    /// 
+    /// use gxi_hako::gx::{
+    ///     gx_interface::*
+    /// };
+    ///
+    /// unsafe {
+    ///
+    ///    let gx = GXInstance::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
+    ///
+    ///     gx.gx_init_lib().expect("Failed to initialize library");
+    ///
+    ///     // Other Operations
+    ///
+    ///     gx.gx_close_lib().expect("Failed to close library");
+    ///
+    /// }
     /// ```
-    /// 
-    /// 
-    /// 
-    /// 
+    unsafe fn gx_close_lib(&self) -> Result<(), libloading::Error> {
+        let gx_close_lib: Symbol<unsafe extern "C" fn() -> i32> = self.lib.get(b"GXCloseLib")?;
+        gx_close_lib();
+        Ok(())
+    }
 
-    pub unsafe fn gx_update_device_list(&self, device_num: *mut u32, timeout: u32) -> Result<i32, libloading::Error> {
-        let gx_update_device_list: Symbol<unsafe extern "C" fn(device_num: *mut u32, timeout: u32) -> i32> = self.lib.get(b"GXUpdateDeviceList")?;
+    /// Update the device list
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gxi_hako::gx::{
+    ///     gx_interface::*
+    /// };
+    ///
+    /// unsafe {
+    ///
+    ///    let gx = GXInstance::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
+    ///
+    ///     gx.gx_init_lib().expect("Failed to initialize library");
+    ///
+    ///     let mut device_num = 0;
+    ///     gx.gx_update_device_list(&mut device_num, 1000)
+    ///         .expect("Failed to update device list");
+    ///
+    ///     // Other Operations
+    ///
+    ///     gx.gx_close_lib().expect("Failed to close library");
+    ///
+    /// }
+    /// ```
+    unsafe fn gx_update_device_list(
+        &self,
+        device_num: *mut u32,
+        timeout: u32,
+    ) -> Result<i32, libloading::Error> {
+        let gx_update_device_list: Symbol<
+            unsafe extern "C" fn(device_num: *mut u32, timeout: u32) -> i32,
+        > = self.lib.get(b"GXUpdateDeviceList")?;
         Ok(gx_update_device_list(device_num, timeout))
     }
 
     /// Get all device base info
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// 
+    ///
     /// use crate::gx::gx_interface::GXInterface;
-    /// 
+    ///
     /// ```
-    /// 
+    ///
 
-    pub unsafe fn gx_get_all_device_base_info(&self, p_device_info: *mut GX_DEVICE_BASE_INFO, p_buffer_size: *mut usize) -> Result<i32, libloading::Error> {
-        let gx_get_all_device_base_info: Symbol<unsafe extern "C" fn(p_device_info: *mut GX_DEVICE_BASE_INFO, p_buffer_size: *mut usize) -> i32> = self.lib.get(b"GXGetAllDeviceBaseInfo")?;
-        println!("p_device_info: {:?}, p_buffer_size: {:?}", p_device_info, p_buffer_size);
+    unsafe fn gx_get_all_device_base_info(
+        &self,
+        p_device_info: *mut GX_DEVICE_BASE_INFO,
+        p_buffer_size: *mut usize,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_all_device_base_info: Symbol<
+            unsafe extern "C" fn(
+                p_device_info: *mut GX_DEVICE_BASE_INFO,
+                p_buffer_size: *mut usize,
+            ) -> i32,
+        > = self.lib.get(b"GXGetAllDeviceBaseInfo")?;
+        println!(
+            "p_device_info: {:?}, p_buffer_size: {:?}",
+            p_device_info, p_buffer_size
+        );
         Ok(gx_get_all_device_base_info(p_device_info, p_buffer_size))
     }
 
     /// Open device by index
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// 
+    ///
     /// use crate::gx::gx_interface::GXInterface;
-    /// 
+    ///
     /// ```
-    /// 
-    pub unsafe fn gx_open_device_by_index(&self, index: u32, device: *mut GX_DEV_HANDLE) -> Result<i32, libloading::Error> {
-        let gx_open_device_by_index: Symbol<unsafe extern "C" fn(index: u32, device: *mut GX_DEV_HANDLE) -> i32> = self.lib.get(b"GXOpenDeviceByIndex")?;
+    ///
+    unsafe fn gx_open_device_by_index(
+        &self,
+        index: u32,
+        device: *mut GX_DEV_HANDLE,
+    ) -> Result<i32, libloading::Error> {
+        let gx_open_device_by_index: Symbol<
+            unsafe extern "C" fn(index: u32, device: *mut GX_DEV_HANDLE) -> i32,
+        > = self.lib.get(b"GXOpenDeviceByIndex")?;
         Ok(gx_open_device_by_index(index, device))
     }
 
-
     /// Send command to device
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// 
+    ///
     /// use crate::gx::gx_interface::GXInterface;
-    /// 
+    ///
     /// ```
-    pub unsafe fn gx_send_command(
-        &self, 
-        device: GX_DEV_HANDLE, 
-        feature_id: GX_FEATURE_ID
+    unsafe fn gx_send_command(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
     ) -> Result<(), CameraError> {
-        let gx_send_command: Symbol<unsafe extern "C" fn(GX_DEV_HANDLE, GX_FEATURE_ID) -> i32> = self.lib.get(b"GXSendCommand")?;
-        
+        let gx_send_command: Symbol<unsafe extern "C" fn(GX_DEV_HANDLE, GX_FEATURE_ID) -> i32> =
+            self.lib.get(b"GXSendCommand")?;
+
         let status_code = gx_send_command(device, feature_id);
         let status = convert_to_gx_status(status_code);
         match status {
             GX_STATUS_LIST::GX_STATUS_SUCCESS => Ok(()),
-            _ => Err(CameraError::OperationError(format!("GXSendCommand failed with status: {:?}", status))),
+            _ => Err(CameraError::OperationError(format!(
+                "GXSendCommand failed with status: {:?}",
+                status
+            ))),
         }
     }
-    
+
     /// Get image from device
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// 
+    ///
     /// use crate::gx::gx_interface::GXInterface;
-    /// 
+    ///
     /// ```
-    pub unsafe fn gx_get_image(&self, device: GX_DEV_HANDLE, p_frame_data: *mut GX_FRAME_DATA, timeout: i32) -> Result<(), CameraError> {
-        let gx_get_image: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, p_frame_data: *mut GX_FRAME_DATA, timeout: i32) -> i32> = self.lib.get(b"GXGetImage")?;
+    unsafe fn gx_get_image(
+        &self,
+        device: GX_DEV_HANDLE,
+        p_frame_data: *mut GX_FRAME_DATA,
+        timeout: i32,
+    ) -> Result<(), CameraError> {
+        let gx_get_image: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                p_frame_data: *mut GX_FRAME_DATA,
+                timeout: i32,
+            ) -> i32,
+        > = self.lib.get(b"GXGetImage")?;
         println!("p_frame_data: {:?}", p_frame_data);
         println!("frame_data: {:?}", *p_frame_data);
         let status_code = gx_get_image(device, p_frame_data, timeout);
         let status = convert_to_gx_status(status_code);
         match status {
             GX_STATUS_LIST::GX_STATUS_SUCCESS => Ok(()),
-            _ => Err(CameraError::OperationError(format!("Failed to get image with status: {:?}", status)))
+            _ => Err(CameraError::OperationError(format!(
+                "Failed to get image with status: {:?}",
+                status
+            ))),
         }
     }
 
-
     /// Close device
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// 
+    ///
     /// use crate::gx::gx_interface::GXInterface;
-    /// 
+    ///
     /// ```
-    pub unsafe fn gx_close_device(&self, device: GX_DEV_HANDLE) -> Result<i32, libloading::Error> {
-        let gx_close_device: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE) -> i32> = self.lib.get(b"GXCloseDevice")?;
+    unsafe fn gx_close_device(&self, device: GX_DEV_HANDLE) -> Result<i32, libloading::Error> {
+        let gx_close_device: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE) -> i32> =
+            self.lib.get(b"GXCloseDevice")?;
         Ok(gx_close_device(device))
     }
 
-
-    /// Close library
-    /// 
-    /// # Examples
-    /// 
-    /// ```
-    /// 
-    /// use crate::gx::gx_interface::GXInterface;
-    /// 
-    /// ```
-    pub unsafe fn gx_close_lib(&self) -> Result<(), libloading::Error> {
-        let gx_close_lib: Symbol<unsafe extern "C" fn() -> i32> = self.lib.get(b"GXCloseLib")?;
-        gx_close_lib();
-        Ok(())
-    }
-
     /// Get int value from device
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// 
+    ///
     /// use crate::gx::gx_interface::GXInterface;
-    /// 
+    ///
     /// ```
-    pub unsafe fn gx_get_int(&self, device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, int_value: *mut i64) -> Result<i32, libloading::Error> {
-        let gx_get_int: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, int_value: *mut i64) -> i32> = self.lib.get(b"GXGetInt")?;
+    unsafe fn gx_get_int(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        int_value: *mut i64,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_int: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                int_value: *mut i64,
+            ) -> i32,
+        > = self.lib.get(b"GXGetInt")?;
         println!("int_value: {:?}", int_value);
         Ok(gx_get_int(device, feature_id, int_value))
     }
 
     /// Get float value from device
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// 
+    ///
     /// use crate::gx::gx_interface::GXInterface;
-    /// 
+    ///
     /// ```
-    pub unsafe fn gx_get_float(&self, device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, float_value: *mut f64) -> Result<i32, libloading::Error> {
-        let gx_get_float: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, float_value: *mut f64) -> i32> = self.lib.get(b"GXGetFloat")?;
+    unsafe fn gx_get_float(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        float_value: *mut f64,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_float: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                float_value: *mut f64,
+            ) -> i32,
+        > = self.lib.get(b"GXGetFloat")?;
         println!("int_value: {:?}", float_value);
         Ok(gx_get_float(device, feature_id, float_value))
     }
 
     /// Get enum value from device
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// 
+    ///
     /// use crate::gx::gx_interface::GXInterface;
-    /// 
+    ///
     /// ```
-    pub unsafe fn gx_get_enum(&self, device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, enum_value: *mut i64) -> Result<i32, libloading::Error> {
-        let gx_get_enum: Symbol<unsafe extern "C" fn(device: GX_DEV_HANDLE, feature_id: GX_FEATURE_ID, enum_value: *mut i64) -> i32> = self.lib.get(b"GXGetEnum")?;
+    unsafe fn gx_get_enum(
+        &self,
+        device: GX_DEV_HANDLE,
+        feature_id: GX_FEATURE_ID,
+        enum_value: *mut i64,
+    ) -> Result<i32, libloading::Error> {
+        let gx_get_enum: Symbol<
+            unsafe extern "C" fn(
+                device: GX_DEV_HANDLE,
+                feature_id: GX_FEATURE_ID,
+                enum_value: *mut i64,
+            ) -> i32,
+        > = self.lib.get(b"GXGetEnum")?;
         println!("enum_value: {:?}", enum_value);
         Ok(gx_get_enum(device, feature_id, enum_value))
     }
 
     /// Register capture callback
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// 
+    ///
     /// use crate::gx::gx_interface::GXInterface;
-    /// 
+    ///
     /// ```
-    pub unsafe fn gx_register_capture_callback(&self, device: *mut c_void, callback: GXCaptureCallBack) -> Result<(), CameraError> {
-        let gx_register_capture_callback: Symbol<unsafe extern "C" fn(device: *mut c_void, user_param: *mut c_void, callback: GXCaptureCallBack) -> i32> = self.lib.get(b"GXRegisterCaptureCallback")?;
+    unsafe fn gx_register_capture_callback(
+        &self,
+        device: *mut c_void,
+        callback: GXCaptureCallBack,
+    ) -> Result<(), CameraError> {
+        let gx_register_capture_callback: Symbol<
+            unsafe extern "C" fn(
+                device: *mut c_void,
+                user_param: *mut c_void,
+                callback: GXCaptureCallBack,
+            ) -> i32,
+        > = self.lib.get(b"GXRegisterCaptureCallback")?;
         let status_code = gx_register_capture_callback(device, std::ptr::null_mut(), callback);
         let status = convert_to_gx_status(status_code);
         match status {
             GX_STATUS_LIST::GX_STATUS_SUCCESS => Ok(()),
-            _ => Err(CameraError::OperationError(format!("Failed to register_callback with status: {:?}", status)))
+            _ => Err(CameraError::OperationError(format!(
+                "Failed to register_callback with status: {:?}",
+                status
+            ))),
         }
     }
 
     /// Unregister capture callback
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
-    /// 
+    ///
     /// use crate::gx::gx_interface::GXInterface;
-    /// 
+    ///
     /// ```
-    pub unsafe fn gx_unregister_capture_callback(&self, device: *mut c_void) -> Result<(), CameraError> {
-        let gx_unregister_capture_callback: Symbol<unsafe extern "C" fn(device: *mut c_void) -> i32> = self.lib.get(b"GXUnregisterCaptureCallback")?;
+    unsafe fn gx_unregister_capture_callback(
+        &self,
+        device: *mut c_void,
+    ) -> Result<(), CameraError> {
+        let gx_unregister_capture_callback: Symbol<
+            unsafe extern "C" fn(device: *mut c_void) -> i32,
+        > = self.lib.get(b"GXUnregisterCaptureCallback")?;
         let status_code = gx_unregister_capture_callback(device);
         let status = convert_to_gx_status(status_code);
         match status {
             GX_STATUS_LIST::GX_STATUS_SUCCESS => Ok(()),
-            _ => Err(CameraError::OperationError(format!("Failed to unregister_callback with status: {:?}", status)))
+            _ => Err(CameraError::OperationError(format!(
+                "Failed to unregister_callback with status: {:?}",
+                status
+            ))),
         }
     }
-
-
 }
-
 
 // 相关定义如下
 // pub type GX_DEV_HANDLE = *mut c_void;

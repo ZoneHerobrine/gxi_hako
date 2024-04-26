@@ -67,7 +67,7 @@ fn print_device_info(device_info: &GX_DEVICE_BASE_INFO) {
 
 fn main() {
     unsafe {
-        let gx = GXInterface::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
+        let gx = GXInstance::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
         // let gx = GXInterface::new("GxIAPI.dll").expect("Failed to load library");
         gx.gx_init_lib().expect("Failed to initialize library");
 
