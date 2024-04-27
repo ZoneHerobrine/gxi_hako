@@ -4,12 +4,113 @@
 [![Minimum Stable Rust Version](https://img.shields.io/badge/Rust-1.77.2-blue?logo=rust)](https://blog.rust-lang.org/2022/02/24/Rust-1.77.2.html)
 
 
-# Index
-用Rust基于GxIAPI的库进行大恒工业相机的接口开发;
+# Introduction
+gxi_hako是一款用Rust基于GxIAPI的库进行大恒工业相机的接口开发;
 目前已实现本地相机的所有接口，并在utils内便写了一些工具类函数，方便使用
 
-Developing the interface of Daheng Industrial Camera using Rust based on GxIAPI library;
+gxi_hako is developing the interface of Daheng Industrial Camera using Rust based on GxIAPI library;
 At present, all interfaces for the local camera have been implemented, and some useful functions
+
+# Overview
+The sdk-dev-doc is contained in ./doc/sdk,here I only provide the English version of the sdk-dev-doc, and the Chinese version is not provided here(Because the 10MB limitation of crates.io).
+
+You can also get the sdk-dev-doc from the SDK of Daheng Imaging you have installed.
+
+# Usage
+Having a breakfast now~
+
+# Example
+Here 5 examples are provided, which are:
+- [x] list_devices_info.rs: list all the devices' information
+- [x] open_device_by_index.rs: open the device by index
+- [x] open_device_by_sn.rs: open the device by serial number
+- [x] get_image.rs: get the image from the camera
+- [x] callback_capture.rs: register the callback function to capture the image realtimely
+
+You can run the example by the following command:
+```shell
+cargo run --example list_devices_info
+```
+
+# Dependencies
+
+## OpenCV Environment
+The OpenCV lib here is only used to easily provide a GUI to show the image, so you can ignore this part if you don't want to show the image.
+
+### Install LLVM and OpenCV 4.9.0
+In Windows 10/11, I would like using choco as the following command to install LLVM and OpenCV 4.9.0:
+
+```shell
+choco install llvm opencv
+```
+
+Following are the websites:
+- [LLVM](https://releases.llvm.org/download.html)
+- [OpenCV](https://opencv.org/releases/)
+- [choco](https://chocolatey.org/)
+
+### Add the path environment variable
+You can add the following path to the path environment variable:
+
+- opencv bin path ...\opencv\build\bin
+- opencv x64 bin path ...\opencv\build\x64\vc16\bin
+- choco bin path C:\ProgramData\chocolatey\bin
+- LLVM bin path C:\Program Files\LLVM\bin
+
+Here is an example:
+```
+D:\ProgramUnsigned\Embedded\opencv\build\bin 
+D:\ProgramUnsigned\Embedded\opencv\build\x64\vc16\bin
+C:\ProgramData\chocolatey\bin
+C:\Program Files\LLVM\bin
+```
+
+### Add opencv environment variable(System Variable)
+
+OPENCV_INCLUDE_PATHS ...\opencv\build\include
+OPENCV_LINK_LIBS opencv_world490
+OPENCV_LINK_PATHS ...\opencv\build\x64\vc16\lib
+
+here is an example:
+```
+OPENCV_INCLUDE_PATHS D:\ProgramUnsigned\Embedded\opencv\build\include
+OPENCV_LINK_LIBS opencv_world490
+OPENCV_LINK_PATHS D:\ProgramUnsigned\Embedded\opencv\build\x64\vc16\lib
+
+```
+
+### Copy opencv_world490.dll to the target directory (if needed)
+Sometimes, you need to copy the opencv_world490.dll to the target directory, which is the same as the exe file.
+
+## GxIAPI Environment
+You also need to install the GxIAPI SDK, which can be downloaded from the [official website](https://www.daheng-imaging.com/downloads/).
+
+Just install the SDK for your platform.
+
+## Camera Environment
+You need to connect the camera to your computer, and make sure the camera is powered on.
+
+Then all the environment is ready.
+
+# Camera Support
+- [x] USB3.0 Camera
+  - [x] Mer Camera (Mono8, Mono10)
+- [ ] Gige Camera
+
+
+# Platform Support
+Now, is Windows only.
+
+# Licensing
+
+Licensed under the MIT License.
+
+# Contributing
+Uhmmm... placeholder
+
+# Acknowledgments
+pLaShOlDeR~
+
 
 # Todolist
 - [x] Get-Set 函数补全
