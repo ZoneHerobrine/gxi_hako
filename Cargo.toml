@@ -5,9 +5,9 @@ edition = "2021"
 authors = [
     "Hako Chest <zoneherobrine@gmail.com>"
 ]
-rust-version = "1.77.2"
-description = "A rust camera interface based on Daheng's GxIAPI"
-keywords = ["gx", "mer", "daheng", "camera"]
+rust-version = "1.77.0"
+description = "A rust camera interface based on Daheng-Image's GxIAPI(Galaxy Camera SDK)"
+keywords = ["gx","galaxy", "mer", "daheng", "camera"]
 categories = ["hardware-support"]
 license = "MIT"
 documentation = "https://docs.rs/gxi_hako"

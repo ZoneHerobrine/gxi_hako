@@ -1,3 +1,4 @@
+//! Contains all the bindings to the GxIAPI.
 pub mod gx_const;
 pub mod gx_callback;
 pub mod gx_enum;
