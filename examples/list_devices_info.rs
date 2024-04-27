@@ -1,12 +1,5 @@
 
 use std::mem::size_of;
-use std::slice;
-
-use opencv::{
-    highgui,
-    core,
-};
-
 use gxi_hako::{
     gx::{
         gx_interface::*, 

@@ -1,8 +1,15 @@
+[![crates.io version badge](https://img.shields.io/crates/v/gxi_hako.svg)](https://crates.io/crates/gxi_hako)
+[![Documentation](https://docs.rs/gxi_hako/badge.svg)](https://docs.rs/gxi_hako)
+[![GitHub workflow status](https://img.shields.io/github/actions/workflow/status/zoneherobrine/gxi_hako/ci.yaml?branch=main&logo=github)](https://github.com/zoneherobrine/gxi_hako/actions)
+[![Minimum Stable Rust Version](https://img.shields.io/badge/Rust-1.77.2-blue?logo=rust)](https://blog.rust-lang.org/2022/02/24/Rust-1.77.2.html)
+
+
 # Index
-尝试用Rust基于GxIAPI的库进行大恒工业相机的接口开发
+用Rust基于GxIAPI的库进行大恒工业相机的接口开发;
 目前已实现本地相机的所有接口，并在utils内便写了一些工具类函数，方便使用
 
-熬了两个通宵终于写出0.1.0了，现在是2024年4月27日早上4：06，我要去睡觉了，明天继续写了
+Developing the interface of Daheng Industrial Camera using Rust based on GxIAPI library;
+At present, all interfaces for the local camera have been implemented, and some useful functions
 
 # Todolist
 - [x] Get-Set 函数补全
@@ -18,7 +25,7 @@
 - [ ] Linux平台支持
 - [ ] 更多相机类型
 
-# DLL里面的实现了的与暂未实现的全部接口
+# DLL implemented status
 - [x] 302    0 0001C020 GXCloseDevice
 - [x] 101    1 0001BBC0 GXCloseLib
 - [x] 700    2 0001E9E0 GXExportConfigFile
