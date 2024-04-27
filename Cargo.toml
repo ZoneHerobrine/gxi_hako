@@ -16,4 +16,5 @@ repository = "https://github.com/zoneherobrine/gxi_rust_ori"
 
 [dependencies]
 libloading = "0.8.3"
+image = "0.25.1"
 opencv = "0.91.1"
