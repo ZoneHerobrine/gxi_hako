@@ -4,10 +4,10 @@ use std::slice;
 use std::thread::sleep;
 use std::time::Duration;
 
-// use opencv::{
-//     highgui,
-//     core,
-// };
+use opencv::{
+    highgui,
+    core,
+};
 
 use gxi_hako::{
     gx::{
@@ -23,25 +23,25 @@ use gxi_hako::{
 };
 
 extern "C" fn frame_callback(p_frame_callback_data: *mut GX_FRAME_CALLBACK_PARAM) {
-    println!("Frame callback triggered.");
-    println!("Frame status: {:?}", unsafe { (*p_frame_callback_data).status });
-    println!("Frame All: {:?}", unsafe { *p_frame_callback_data });
+    // 避免刷屏
+    // println!("Frame callback triggered.");
+    // println!("Frame status: {:?}", unsafe { (*p_frame_callback_data).status });
+    // println!("Frame All: {:?}", unsafe { *p_frame_callback_data });
 
     unsafe {
         let frame_callback_data = &*p_frame_callback_data;
         if frame_callback_data.status == 0 {
-            // Following code is commented out because it requires opencv
-            // let data = slice::from_raw_parts(frame_callback_data.pImgBuf as *const u8, (frame_callback_data.nWidth * frame_callback_data.nHeight) as usize);
-            // let mat = core::Mat::new_rows_cols_with_data(
-            //     frame_callback_data.nHeight, 
-            //     frame_callback_data.nWidth, 
-            //     // core::CV_8UC1, 
-            //     data
-            // ).unwrap();
-            // highgui::imshow("Camera Frame", &mat).unwrap();
-            // if highgui::wait_key(10).unwrap() > 0 {
-            //     highgui::destroy_window("Camera Frame").unwrap();
-            // }
+            let data = slice::from_raw_parts(frame_callback_data.pImgBuf as *const u8, (frame_callback_data.nWidth * frame_callback_data.nHeight) as usize);
+            let mat = core::Mat::new_rows_cols_with_data(
+                frame_callback_data.nHeight, 
+                frame_callback_data.nWidth, 
+                // core::CV_8UC1, 
+                data
+            ).unwrap();
+            highgui::imshow("Camera Frame", &mat).unwrap();
+            if highgui::wait_key(10).unwrap() > 0 {
+                highgui::destroy_window("Camera Frame").unwrap();
+            }
         }
     }
 }
@@ -101,7 +101,7 @@ fn main() {
                     gx.gx_send_command(device_handle, GX_FEATURE_ID::GX_COMMAND_ACQUISITION_START)
                         .expect("Failed to send command");
                         
-                        // highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
+                        highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
                     loop {
                         sleep(Duration::from_secs(15));
                         break;

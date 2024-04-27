@@ -5,10 +5,10 @@ use std::slice;
 use std::thread::sleep;
 use std::time::Duration;
 
-// use opencv::{
-//     highgui,
-//     core,
-// };
+use opencv::{
+    highgui,
+    core,
+};
 
 use gxi_hako::{
     gx::{
@@ -95,6 +95,12 @@ fn main() {
                         first_device_sn.trim_end_matches(char::from(0))
                     );
 
+                    // let reg_result = gx.gx_register_capture_callback(device_handle, frame_callback);
+                    // match reg_result {
+                    //     Ok(_) => println!("Capture callback registered successfully."),
+                    //     Err(e) => eprintln!("Failed to register capture callback: {:?}", e),
+                    // }
+
                     gx.gx_send_command(device_handle, GX_FEATURE_ID::GX_COMMAND_ACQUISITION_START)
                         .expect("Failed to send command");
 
@@ -140,27 +146,24 @@ fn main() {
                             //     highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
                                 
                             // }
-
                                 if frame_data.nStatus == 0 {
-
-                                    // Following code is for OpenCV
-                                    // let data = slice::from_raw_parts(frame_data.pImgBuf as *const u8, (frame_data.nWidth * frame_data.nHeight) as usize);
+                                    let data = slice::from_raw_parts(frame_data.pImgBuf as *const u8, (frame_data.nWidth * frame_data.nHeight) as usize);
                                     
-                                    // // 使用正确的函数签名创建Mat对象
-                                    // let mat = core::Mat::new_rows_cols_with_data(
-                                    //     frame_data.nHeight, 
-                                    //     frame_data.nWidth, 
-                                    //     // core::CV_8UC1, 
-                                    //     data
-                                    // ).unwrap();
+                                    // 使用正确的函数签名创建Mat对象
+                                    let mat = core::Mat::new_rows_cols_with_data(
+                                        frame_data.nHeight, 
+                                        frame_data.nWidth, 
+                                        // core::CV_8UC1, 
+                                        data
+                                    ).unwrap();
                         
-                                    // highgui::imshow("Camera Frame", &mat).unwrap();
-                                    // if highgui::wait_key(10).unwrap() > 0 {
-                                    //     highgui::destroy_window("Camera Frame").unwrap();
-                                    // }
+                                    highgui::imshow("Camera Frame", &mat).unwrap();
+                                    if highgui::wait_key(10).unwrap() > 0 {
+                                        highgui::destroy_window("Camera Frame").unwrap();
+                                    }
 
-                                    // highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
-                                    // sleep(Duration::from_secs(10));
+                                    highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
+                                    sleep(Duration::from_secs(10));
                                     
                                 }
                             }
@@ -168,8 +171,23 @@ fn main() {
                         }
 
                         
+                    //     highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
+                    // loop {
+                    //     sleep(Duration::from_secs(1));
+                    //     break;
+                    // }
+
                     gx.gx_send_command(device_handle, GX_FEATURE_ID::GX_COMMAND_ACQUISITION_STOP)
                         .expect("Failed to send command");
+
+
+                    
+
+                    // let unregeister_result = gx.gx_unregister_capture_callback(device_handle);
+                    // match unregeister_result {
+                    //     Ok(_) => println!("Capture callback unregistered successfully."),
+                    //     Err(e) => eprintln!("Failed to unregister capture callback: {:?}", e),
+                    // }
 
                     // Close the device
                     gx.gx_close_device(device_handle)
