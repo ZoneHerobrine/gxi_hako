@@ -4,12 +4,24 @@
 [![Minimum Stable Rust Version](https://img.shields.io/badge/Rust-1.77.2-blue?logo=rust)](https://blog.rust-lang.org/2022/02/24/Rust-1.77.2.html)
 
 
+<hr />
+
+![alt text](assets/image.png)
+
+# Deprecated
+这个库基本上已经停止维护了，或者说已经被整合进了新的库之中，新的库是GXCI，它包含大恒相机SDK本地相机部分的全部原生实现，并且提供了对应的HAL封装，可以在[github](https://www.github.com/zoneherobrine/gxci)和[crates](https://crates.io/crates/gxci)上查看
+
+This project is deprecated, or it has been integrated into a new project, the new project is GXCI, it's in[github](https://www.github.com/zoneherobrine/gxci) and [crates](https://crates.io/crates/gxci), which has FULL RAW IMPLEMENTATION of the local camera part of Daheng Imaging SDK, and it provides HAL functions.
+
+
 # Introduction
 gxi_hako是一款用Rust基于GxIAPI的库进行大恒工业相机的接口开发;
-目前已实现本地相机的所有接口，并在utils内便写了一些工具类函数，方便使用
+
+目前已实现本地相机的所有接口，enums还没有完全迁移过来，并在utils内便写了一些工具类函数，方便使用
 
 gxi_hako is developing the interface of Daheng Industrial Camera using Rust based on GxIAPI library;
-At present, all interfaces for the local camera have been implemented, and some useful functions
+
+At present, all interfaces for the local camera have been implemented, and the enums have not been completely migrated. Some utility functions have been written in utils to facilitate use.
 
 # Overview
 The sdk-dev-doc is contained in ./doc/sdk,here I only provide the English version of the sdk-dev-doc, and the Chinese version is not provided here(Because the 10MB limitation of crates.io).

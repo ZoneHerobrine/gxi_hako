@@ -271,8 +271,8 @@ pub enum GX_FEATURE_ID{
     GX_ENUM_MULTISOURCE_SELECTOR            =( 30305 | GX_FEATURE_TYPE::GX_FEATURE_ENUM as u32| GX_FEATURE_LEVEL::GX_FEATURE_LEVEL_REMOTE_DEV as u32)as isize,    //< MultiSourceSelector to GX_MULTISOURCE_SELECTOR_ENTRY
     GX_BOOL_MULTISOURCE_ENABLE              =( 30306 | GX_FEATURE_TYPE::GX_FEATURE_BOOL as u32| GX_FEATURE_LEVEL::GX_FEATURE_LEVEL_REMOTE_DEV as u32)as isize,    //< MultiSource Trigger Enable
     GX_BOOL_TRIGGER_CACHE_ENABLE            =( 30307 | GX_FEATURE_TYPE::GX_FEATURE_BOOL as u32| GX_FEATURE_LEVEL::GX_FEATURE_LEVEL_REMOTE_DEV as u32)as isize,    //< Trigger Cache Enable
-
-
+    GX_FLOAT_GAIN                     = (5011 | GX_FEATURE_TYPE::GX_FEATURE_FLOAT as u32 | GX_FEATURE_LEVEL::GX_FEATURE_LEVEL_REMOTE_DEV as u32)as isize,  //< The value is an float value that sets the selected gain control in units specific to the camera.
+    
     // todolist now 1-2-3 is enough~ :D
     // DigitalIO 4000
     // AnalogControl 5000

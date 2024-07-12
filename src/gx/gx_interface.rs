@@ -4,11 +4,6 @@
 use libloading::{Library, Symbol};
 use std::ffi::{c_void,c_char,CStr};
 
-// use crate::{
-//     gx::{gx_enum::*, gx_handle::*, gx_struct::*},
-//     utils::status::convert_to_gx_status,
-// };
-
 use crate::gx::{
     gx_enum::*, gx_handle::*, gx_struct::*,gx_callback::*
 };
@@ -132,7 +127,7 @@ pub trait GXInterface {
         device: GX_DEV_HANDLE,
         feature_id: GX_FEATURE_ID,
         name: *mut c_char,
-        size: *mut usize, // Using usize to represent size_t
+        size: *mut usize, 
     ) -> Result<i32, libloading::Error>;
 
     unsafe fn gx_is_implemented(
@@ -230,14 +225,14 @@ pub trait GXInterface {
         &self,
         device: GX_DEV_HANDLE,
         feature_id: GX_FEATURE_ID,
-        size: *mut usize, // 使用 usize 来表示 size_t
+        size: *mut usize, 
     ) -> Result<i32, libloading::Error>;
 
     unsafe fn gx_get_string_max_length(
         &self,
         device: GX_DEV_HANDLE,
         feature_id: GX_FEATURE_ID,
-        size: *mut usize, // 使用 usize 来表示 size_t
+        size: *mut usize, 
     ) -> Result<i32, libloading::Error>;
 
     unsafe fn gx_get_string(
@@ -259,34 +254,34 @@ pub trait GXInterface {
         &self,
         device: GX_DEV_HANDLE,
         feature_id: GX_FEATURE_ID,
-        size: *mut usize, // Using usize to represent size_t
+        size: *mut usize, 
     ) -> Result<i32, libloading::Error>;
     unsafe fn gx_get_buffer(
         &self,
         device: GX_DEV_HANDLE,
         feature_id: GX_FEATURE_ID,
         buffer: *mut u8,
-        size: *mut usize, // Using usize to represent size_t
+        size: *mut usize, 
     ) -> Result<i32, libloading::Error>;
     unsafe fn gx_set_buffer(
         &self,
         device: GX_DEV_HANDLE,
         feature_id: GX_FEATURE_ID,
         buffer: *const u8,
-        size: usize, // Using usize to represent size_t
+        size: usize, 
     ) -> Result<i32, libloading::Error>;
 
     unsafe fn gx_get_int_range(
         &self,
         device: GX_DEV_HANDLE,
         feature_id: GX_FEATURE_ID,
-        int_range: *mut GX_INT_RANGE, // Assume GX_INT_RANGE is defined somewhere
+        int_range: *mut GX_INT_RANGE, 
     ) -> Result<i32, libloading::Error>;
     unsafe fn gx_get_float_range(
         &self,
         device: GX_DEV_HANDLE,
         feature_id: GX_FEATURE_ID,
-        float_range: *mut GX_FLOAT_RANGE, // Assume GX_FLOAT_RANGE is defined somewhere
+        float_range: *mut GX_FLOAT_RANGE, 
     ) -> Result<i32, libloading::Error>;
 
     unsafe fn gx_get_event_num_in_queue(
@@ -438,7 +433,8 @@ impl GXInterface for GXInstance {
     ///     let mut device_num = 0;
     ///     gx.gx_update_device_list(&mut device_num, 1000)
     ///         .expect("Failed to update device list");
-    ///
+    ///     println!("Number of devices: {:?}", device_num);
+    /// 
     ///     // Other Operations
     ///
     ///     gx.gx_close_lib().expect("Failed to close library");
@@ -461,7 +457,26 @@ impl GXInterface for GXInstance {
     /// # Examples
     ///
     /// ```
-    /// use crate::gx::gx_interface::GXInterface;
+    /// use gxi_hako::gx::{
+    ///     gx_interface::*
+    /// };
+    /// 
+    /// unsafe {
+    ///
+    ///    let gx = GXInstance::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
+    ///
+    ///     gx.gx_init_lib().expect("Failed to initialize library");
+    ///
+    ///     let mut device_num = 0;
+    ///     gx.gx_update_all_device_list(&mut device_num, 1000)
+    ///         .expect("Failed to update device list");
+    ///     println!("Number of devices: {:?}", device_num);
+    ///
+    ///     // Other Operations
+    ///
+    ///     gx.gx_close_lib().expect("Failed to close library");
+    ///
+    /// }
     /// ```
     unsafe fn gx_update_all_device_list(
         &self,
@@ -487,11 +502,47 @@ impl GXInterface for GXInstance {
     /// # Examples
     ///
     /// ```
+    /// use gxi_hako::gx::{
+    ///     gx_interface::*
+    /// };
     ///
-    /// use crate::gx::gx_interface::GXInterface;
+    /// unsafe {
     ///
+    ///    let gx = GXInstance::new("C:\\Program Files\\Daheng Imaging\\GalaxySDK\\APIDll\\Win64\\GxIAPI.dll").expect("Failed to load library");
+    ///
+    ///     gx.gx_init_lib().expect("Failed to initialize library");
+    ///
+    ///     let mut device_num = 0;
+    ///     gx.gx_update_device_list(&mut device_num, 1000)
+    ///         .expect("Failed to update device list");
+    ///     println!("Number of devices: {:?}", device_num);
+    /// 
+    ///     if device_num > 0 {
+    ///         let mut base_info: Vec<GX_DEVICE_BASE_INFO> = (0..device_num).map(|_| {
+    ///            GXDeviceBaseInfoBuilder::new().build()
+    ///         }).collect();
+    ///         let mut size = (device_num as usize) * size_of::<GX_DEVICE_BASE_INFO>();
+    ///         let status = gx
+    ///             .gx_get_all_device_base_info(base_info.as_mut_ptr(), &mut size)
+    ///             .expect("Failed to get all device base info");
+    ///         if status == 0 {
+    ///             // Assuming 0 is GX_STATUS_SUCCESS
+    ///             for info in base_info {
+    ///             println!("Device Info: {:?}", info);
+    ///             }
+    ///         } else {
+    ///             println!("Failed to get device base info.");
+    ///         }
+    ///     } else {
+    ///        println!("No Devices found.");
+    ///     }
+    /// 
+    ///     // Other Operations
+    ///
+    ///     gx.gx_close_lib().expect("Failed to close library");
+    ///
+    /// }
     /// ```
-    ///
 
     unsafe fn gx_get_all_device_base_info(
         &self,

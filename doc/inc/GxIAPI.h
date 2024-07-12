@@ -341,22 +341,7 @@ typedef enum GX_FEATURE_ID
 	GX_BOOL_MULTISOURCE_ENABLE				= 30306 | GX_FEATURE_BOOL | GX_FEATURE_LEVEL_REMOTE_DEV,    ///< MultiSource Trigger Enable
 	GX_BOOL_TRIGGER_CACHE_ENABLE			= 30307 | GX_FEATURE_BOOL | GX_FEATURE_LEVEL_REMOTE_DEV,    ///< Trigger Cache Enable
 
-    //----------------DigitalIO Section----------------------------------
-    GX_ENUM_USER_OUTPUT_SELECTOR      = 4000 | GX_FEATURE_ENUM | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< Selects which bit of the User Output register will be set by UserOutputValue.
-    GX_BOOL_USER_OUTPUT_VALUE         = 4001 | GX_FEATURE_BOOL | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< Sets the value of the bit selected by UserOutputSelector.
-    GX_ENUM_USER_OUTPUT_MODE          = 4002 | GX_FEATURE_ENUM | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< Output signal can be used for different purposes, flash or a user-defined constant level, see also GX_USER_OUTPUT_MODE_ENTRY
-    GX_ENUM_STROBE_SWITCH             = 4003 | GX_FEATURE_ENUM | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< Set the flash light switch, see also GX_STROBE_SWITCH_ENTRY
-    GX_ENUM_LINE_SELECTOR             = 4004 | GX_FEATURE_ENUM | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< Selects the physical line (or pin) of the external device connector to configure.
-    GX_ENUM_LINE_MODE                 = 4005 | GX_FEATURE_ENUM | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< Controls if the physical Line is used to Input or Output a signal.
-    GX_BOOL_LINE_INVERTER             = 4006 | GX_FEATURE_BOOL | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< Controls the inversion of the signal of the selected input or output Line.
-    GX_ENUM_LINE_SOURCE               = 4007 | GX_FEATURE_ENUM | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< Selects which internal acquisition or I/O source signal to output on the selected Line.
-    GX_BOOL_LINE_STATUS               = 4008 | GX_FEATURE_BOOL | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< Returns the current status of the selected input or output Line.
-    GX_INT_LINE_STATUS_ALL            = 4009 | GX_FEATURE_INT  | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< Returns the current status of all available Line signals at time of polling in a single bit field.
-    GX_FLOAT_PULSE_WIDTH              = 4010 | GX_FEATURE_FLOAT | GX_FEATURE_LEVEL_REMOTE_DEV,  ///< User-defined pulse width
-	GX_INT_LINE_RANGE                 = 4011 | GX_FEATURE_INT  | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< flash line ragne
-    GX_INT_LINE_DELAY                 = 4012 | GX_FEATURE_INT  | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< flash line delay
-	GX_INT_LINE_FILTER_RAISING_EDGE   = 4013 | GX_FEATURE_INT  | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< Pin rising edge filtering
-	GX_INT_LINE_FILTER_FALLING_EDGE   = 4014 | GX_FEATURE_INT  | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< Pin falling edge filtering
+
 
     //----------------AnalogControls Section----------------------------
     GX_ENUM_GAIN_AUTO                 = 5000 | GX_FEATURE_ENUM | GX_FEATURE_LEVEL_REMOTE_DEV,   ///< Sets the automatic gain control (AGC) mode.

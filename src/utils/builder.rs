@@ -98,12 +98,15 @@ impl GXDeviceBaseInfoBuilder {
 
 
 pub struct GXOpenParamBuilder {
+    
     pub pszContent: *const c_char,
     pub openMode: GX_OPEN_MODE,
     pub accessMode: GX_ACCESS_MODE,
+
 }
 
 impl GXOpenParamBuilder {
+
     pub fn new() -> Self {
         Self {
             pszContent: std::ptr::null(),
@@ -134,4 +137,5 @@ impl GXOpenParamBuilder {
             accessMode: self.accessMode,
         }
     }
+
 }

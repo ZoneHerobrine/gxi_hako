@@ -7,6 +7,7 @@ use std::time::Duration;
 
 use opencv::{
     highgui,
+    imgcodecs,
     core,
 };
 
@@ -156,14 +157,14 @@ fn main() {
                                         // core::CV_8UC1, 
                                         data
                                     ).unwrap();
+                                    // 保存图像
                         
-                                    highgui::imshow("Camera Frame", &mat).unwrap();
-                                    if highgui::wait_key(10).unwrap() > 0 {
-                                        highgui::destroy_window("Camera Frame").unwrap();
+                                    // 尝试保存图像，检查是否成功
+                                    if imgcodecs::imwrite("right.png", &mat, &opencv::types::VectorOfi32::new()).unwrap() {
+                                        println!("Image saved successfully.");
+                                    } else {
+                                        println!("Failed to save the image.");
                                     }
-
-                                    highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
-                                    sleep(Duration::from_secs(10));
                                     
                                 }
                             }

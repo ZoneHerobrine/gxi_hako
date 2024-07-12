@@ -92,6 +92,8 @@ fn main() {
                         first_device_sn.trim_end_matches(char::from(0))
                     );
 
+                    gx.gx_set_float(device_handle, GX_FEATURE_ID::GX_FLOAT_GAIN, 20.0);
+
                     let reg_result = gx.gx_register_capture_callback(device_handle, frame_callback);
                     match reg_result {
                         Ok(_) => println!("Capture callback registered successfully."),
@@ -103,7 +105,7 @@ fn main() {
                         
                         highgui::named_window("Camera", highgui::WINDOW_AUTOSIZE).unwrap();
                     loop {
-                        sleep(Duration::from_secs(15));
+                        sleep(Duration::from_secs(60));
                         break;
                     }
 
