@@ -17,4 +17,4 @@ repository = "https://github.com/zoneherobrine/gxi_hako"
 [dependencies]
 libloading = "0.8.3"
 image = "0.25.1"
-opencv = "0.91.1"
+opencv = "0.92.0"
