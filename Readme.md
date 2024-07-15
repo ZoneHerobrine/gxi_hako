@@ -6,7 +6,7 @@
 
 <hr />
 
-![alt text](assets/image.png)
+![alt text](assets/deprecated.png)
 
 # Deprecated
 这个库基本上已经停止维护了，或者说已经被整合进了新的库之中，新的库是GXCI，它包含大恒相机SDK本地相机部分的全部原生实现，并且提供了对应的HAL封装，可以在[github](https://www.github.com/zoneherobrine/gxci)和[crates](https://crates.io/crates/gxci)上查看
